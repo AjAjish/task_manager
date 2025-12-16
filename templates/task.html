@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block title %}New Task{% endblock %}
+
+{% block content %}
+<div class="task-container">
+    <div class="task-header">
+        <h1>Create New Task</h1>
+        <p>Fill in the details below to create a new task entry</p>
+    </div>
+    {% if userid %}
+    <form class="task-form" id="taskForm" method="post" action="{% url 'task_with_id' userid=userid %}">
+        {% csrf_token %}
+        <!-- Personal Data Section -->
+        <div class="form-section">
+            <div class="section-header">
+                <h2>Personal Data</h2>
+                <p>Enter the client's personal information</p>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="taskName">Full Name *</label>
+                    <input type="text" id="taskName" name="taskName" required 
+                           placeholder="John Smith" class="form-input">
+                </div>
+
+                <div class="form-group">
+                    <label for="taskAddress">Address</label>
+                    <textarea id="taskAddress" name="taskAddress" rows="3" 
+                              placeholder="123 Main St, City, State, ZIP" class="form-input"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="taskMobile">Mobile Number *</label>
+                    <input type="tel" id="taskMobile" name="taskMobile" required 
+                           placeholder="+1 (555) 123-4567" class="form-input">
+                </div>
+
+                <div class="form-group">
+                    <label for="taskEmail">Email Address *</label>
+                    <input type="email" id="taskEmail" name="taskEmail" required 
+                           placeholder="john@example.com" class="form-input">
+                </div>
+            </div>
+        </div>
+
+        <!-- System Data Section -->
+        <div class="form-section">
+            <div class="section-header">
+                <h2>System Data</h2>
+                <p>Enter the system details and issues</p>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="systemType">System Type *</label>
+                    <select id="systemType" name="systemType" required class="form-input">
+                        <option value="">Select type</option>
+                        <option value="pc">PC</option>
+                        <option value="laptop">Laptop</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="brand">Brand</label>
+                    <input type="text" id="brand" name="brand" 
+                           placeholder="Apple, Dell, HP, etc." class="form-input">
+                </div>
+
+                <div class="form-group">
+                    <label for="model">Model</label>
+                    <input type="text" id="model" name="model" 
+                           placeholder="MacBook Pro, XPS 13, etc." class="form-input">
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="issueDescription">Issue Description *</label>
+                    <textarea id="issueDescription" name="issueDescription" required rows="4" 
+                              placeholder="Describe the issue in detail..." class="form-input"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Section -->
+        <div class="form-section">
+            <div class="section-header">
+                <h2>Payment Information</h2>
+                <p>Enter the payment details</p>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="price">Price / Charges ($)</label>
+                    <input type="number" id="price" name="price" 
+                           placeholder="0.00" min="0" step="0.01" class="form-input">
+                </div>
+
+                <div class="form-group">
+                    <label for="paymentStatus">Payment Status</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="paymentStatus" value="paid" checked>
+                            <span class="radio-custom"></span>
+                            <span>Paid</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="paymentStatus" value="pending">
+                            <span class="radio-custom"></span>
+                            <span>Pending</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions task-actions">
+            <button type="button" class="btn btn-secondary" id="resetForm">Clear Form</button>
+            <button type="submit" class="btn btn-primary">Create Task</button>
+        </div>
+    </form>
+    {% else %}
+    <p class="error-message">User ID is missing. Please log in again.</p>
+    {% endif %}
+</div>
+{% endblock %}
