@@ -23,3 +23,12 @@ class Task(models.Model):
 
     def __str__(self):
         return f"{self.taskid}"
+    
+class Work(models.Model):
+    workAssignedTo = models.ForeignKey(User, on_delete=models.CASCADE)
+    workTask = models.ForeignKey(Task, on_delete=models.CASCADE)
+    workDescription = models.TextField(blank=True)
+    assignedAt = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Work assigned to {self.workAssignedTo.username} for task {self.workTask.taskid}"

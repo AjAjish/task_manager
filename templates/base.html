@@ -23,29 +23,39 @@
             <div class="nav-brand">
                 <a href="/">TaskFlow</a>
             </div>
-
+            {% if userid %}
+            <!-- Navigation Links -->
+            <ul class="nav-menu" id="navMenu">
+                <li class="nav-item">
+                    <a href="{% url 'home_with_id' userid=userid %}" class="nav-link">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'dashboard_with_id' userid=userid %}" class="nav-link">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'task_with_id' userid=userid %}" class="nav-link">Task</a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'work_with_id' userid=userid %}" class="nav-link">Work</a>
+                </li>
+            </ul>
+            {% else %}
             <!-- Navigation Links -->
             <ul class="nav-menu" id="navMenu">
                 <li class="nav-item">
                     <a href="/" class="nav-link">Home</a>
                 </li>
                 <li class="nav-item">
-                    <a href="/register" class="nav-link">Register</a>
+                    <a href="{% url 'register' %}" class="nav-link">Register</a>
                 </li>
                 <li class="nav-item">
-                    <a href="/login" class="nav-link">Login</a>
+                    <a href="{% url 'login' %}" class="nav-link">Login</a>
                 </li>
                 <li class="nav-item">
-                    <a href="/dashboard" class="nav-link">Dashboard</a>
-                </li>
-                <li class="nav-item">
-                    <a href="/task" class="nav-link">Task</a>
-                </li>
-                <li class="nav-item">
-                    <a href="/work" class="nav-link">Work</a>
+                    <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
                 </li>
             </ul>
-
+            {% endif %}
             <!-- Theme Toggle and Hamburger -->
             <div class="nav-controls">
                 <!-- Theme Toggle Button -->

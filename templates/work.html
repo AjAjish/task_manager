@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Work Management{% endblock %}
+
+{% block content %}
+<div class="work-container">
+
+    <!-- ================= WORK HEADER ================= -->
+    <div class="work-header">
+        <div class="header-content">
+            <h1>Work Management</h1>
+            <p class="work-subtitle">Manage users and assign tasks efficiently</p>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-primary" id="assignTaskBtn">
+                Assign Work
+            </button>
+        </div>
+    </div>
+
+    <!-- ================= STATS ================= -->
+    <div class="work-stats">
+        <div class="work-stat-card">
+            <div class="stat-icon stat-users">👤</div>
+            <div class="stat-info">
+                <span class="stat-label">Total Users</span>
+                <span class="stat-number">{{ user|length }}</span>
+            </div>
+        </div>
+
+        <div class="work-stat-card">
+            <div class="stat-icon stat-tasks">📋</div>
+            <div class="stat-info">
+                <span class="stat-label">Total Tasks</span>
+                <span class="stat-number">{{ tasks|length }}</span>
+            </div>
+        </div>
+
+        <div class="work-stat-card">
+            <div class="stat-icon stat-assigned">✅</div>
+            <div class="stat-info">
+                <span class="stat-label">Active Works</span>
+                <span class="stat-number">—</span>
+            </div>
+        </div>
+
+        <div class="work-stat-card">
+            <div class="stat-icon stat-unassigned">⏳</div>
+            <div class="stat-info">
+                <span class="stat-label">Available Tasks</span>
+                <span class="stat-number">{{ tasks|length }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MAIN GRID ================= -->
+    <div class="work-content">
+
+        <!-- ================= USERS ================= -->
+        <div class="work-section users-section">
+            <div class="section-header">
+                <h2>Users ({{ user|length }})</h2>
+            </div>
+
+            <div class="users-list">
+                {% for u in user %}
+                <div class="user-card">
+                    <div class="user-avatar">
+                        {{ u.username|slice:":1"|upper }}
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name">{{ u.username }}</div>
+                        <div class="user-email">{{ u.email }}</div>
+                        <span class="user-badge">Active</span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state">
+                    <p>No users found</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- ================= TASKS ================= -->
+        <div class="work-section tasks-section">
+            <div class="section-header">
+                <h2>Available Tasks ({{ tasks|length }})</h2>
+            </div>
+
+            <div class="tasks-list">
+                {% for task in tasks %}
+                <div class="task-card">
+
+                    <div class="task-header-row">
+                        <div class="task-main-info">
+                            <!-- Task Name -->
+                            <div class="task-title">
+                                Owner : {{ task.taslDetails.task_info.taskName }}
+                            </div>
+                            System Details...
+                            <!-- System Brand  -->
+                            <div class="task-description">
+                                {{ task.taslDetails.system_info.brand }}
+                            </div>
+                            <!-- System Model -->
+                            <div class="task-description">
+                                {{ task.taslDetails.system_info.model }}
+                            </div>
+                            <!-- Issue Description -->
+                            <div class="task-description">
+                                {{ task.taslDetails.system_info.issueDescription|truncatewords:20 }}
+                            </div>
+                        </div>
+
+                        <!-- System Type -->
+                        <div class="task-priority">
+                            <span class="priority-badge priority-medium">
+                                {{ task.taslDetails.system_info.systemType|title }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="task-footer-row">
+                        <div class="task-meta">
+                            <span class="task-meta-item">
+                             Take By :  👤 {{ task.taslDetails.task_created_by }}
+                            </span>
+
+                            <span class="task-meta-item">
+                             Loc  : 📍 {{ task.taslDetails.task_info.taskAddress }}
+                            </span>
+
+                            <span class="task-meta-item">
+                             E Date  : 📅 {{ task.taslDetails.system_info.entryDate }}
+                            </span>
+
+                            <span class="task-meta-item">
+                             D Date :  📅 {{ task.taslDetails.system_info.dueDate }} 
+                            </span>
+
+                            <span class="task-meta-item">
+                             Price  : 💰 ₹{{ task.taslDetails.payment_info.price }}
+                            </span>
+
+                            <span class="task-meta-item">
+                             Advance  : 💰 ₹{{ task.taslDetails.payment_info.advance }}
+                            </span>
+
+
+                            <span class="task-meta-item">
+                                ⚙ {{ task.taslDetails.payment_info.paymentStatus|title }}
+                            </span>
+                        </div>
+                    </div>
+
+                </div>
+                {% empty %}
+                <div class="empty-state">
+                    <p>No tasks available</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ================= ASSIGN MODAL ================= -->
+<div class="modal" id="assignWorkModal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+
+        <div class="modal-header">
+            <h3>Assign Work</h3>
+            <button class="modal-close" id="closeWorkModal">✖</button>
+        </div>
+
+        <div class="modal-body">
+            <form method="POST" action="{% url 'work_with_id' userid=userid %}">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label class="form-label">Select Task</label>
+                    <select name="workTaskId" class="form-select" required>
+                        <option value="">Choose task</option>
+                        {% for task in tasks %}
+                        <option value="{{ task.taslDetails.task_info.taskid }}">{{ task.taslDetails.task_info.taskName }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Assign To</label>
+                    <select name="assignedUserId" class="form-select" required>
+                        <option value="">Choose user</option>
+                        {% for u in user %}
+                        <option value="{{ u.userid }}">{{ u.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Work Description</label>
+                    <textarea
+                        name="workDescription"
+                        class="form-textarea"
+                        rows="4"
+                        placeholder="Optional notes..."
+                    ></textarea>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">
+                        Assign Work
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const assignBtn = document.getElementById("assignTaskBtn");
+        const modal = document.getElementById("assignWorkModal");
+        const closeBtn = document.getElementById("closeWorkModal");
+        const overlay = modal.querySelector(".modal-overlay");
+
+        // Open modal
+        assignBtn.addEventListener("click", function () {
+            modal.style.display = "flex";
+        });
+
+        // Close modal (X button)
+        closeBtn.addEventListener("click", function () {
+            modal.style.display = "none";
+        });
+
+        // Close modal (overlay click)
+        overlay.addEventListener("click", function () {
+            modal.style.display = "none";
+        });
+    });
+</script>
+
+
+{% endblock %}
+
