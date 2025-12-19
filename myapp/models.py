@@ -32,3 +32,10 @@ class Work(models.Model):
 
     def __str__(self):
         return f"Work assigned to {self.workAssignedTo.username} for task {self.workTask.taskid}"
+    
+class SalesAndExpenses(models.Model):
+    salesid = models.UUIDField(primary_key=True,default=uuid.uuid4)
+    salesData = models.JSONField(default=dict)
+
+    def __str__(self):
+        return f"Total Income: {self.salesData.get('total_income', 0)} and Total Expenses: {self.salesData.get('total_expenses', 0)}"

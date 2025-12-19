@@ -41,7 +41,7 @@
             <div class="stat-icon stat-assigned">✅</div>
             <div class="stat-info">
                 <span class="stat-label">Active Works</span>
-                <span class="stat-number">—</span>
+                <span class="stat-number">{{ works|length }}</span>
             </div>
         </div>
 
@@ -186,7 +186,7 @@
                     <select name="workTaskId" class="form-select" required>
                         <option value="">Choose task</option>
                         {% for task in tasks %}
-                        <option value="{{ task.taslDetails.task_info.taskid }}">{{ task.taslDetails.task_info.taskName }}</option>
+                        <option value="{{ task.taskid }}">{{ task.taslDetails.task_info.taskName }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -221,6 +221,33 @@
         </div>
     </div>
 </div>
+
+<!-- ================= LIST ASSIGNED WORK ================= -->
+<div class="work-assigned-section">
+    <div class="section-header">
+        <h2>Assigned Works</h2>
+    </div>
+
+    <div class="assigned-works-list">
+        {% for work in works %}
+        <div class="assigned-work-card">
+            <div class="work-info">
+                <div class="work-task">Task: {{ work.workTask.taslDetails.task_info.taskName }}</div>
+                <div class="work-assigned-to">Assigned To: {{ work.workAssignedTo.username }}</div>
+                <div class="work-description">Description: {{ work.workDescription|default:"No description provided." }}</div>
+            </div>
+            <div class="work-meta">
+                <span class="work-date">Assigned On: {{ work.assignedAt|date:"M d, Y" }}</span>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <p>No works assigned yet</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {

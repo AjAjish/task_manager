@@ -1,6 +1,7 @@
 from django.shortcuts import render , redirect
 from django.contrib import messages
-from .models import User, Task , Work
+from django.utils import timezone
+from .models import User, Task , Work , SalesAndExpenses
 
 # Create your views here.
 
@@ -152,6 +153,7 @@ def work(request,userid=None):
 
     users = User.objects.all()
     tasks = Task.objects.all()
+    works = Work.objects.all()
 
     if request.method == 'POST':
         assigned_userid = request.POST.get('assignedUserId')
@@ -179,8 +181,128 @@ def work(request,userid=None):
         except Task.DoesNotExist:
             messages.error(request, "Selected task does not exist.")
 
+        except Work.DoesNotExist:
+            messages.error(request, "Work assignment failed.")
+        
+        except Exception as e:
+            messages.error(request, f"An error occurred: {str(e)}")
+
     return render(request, 'work.html', {
         'userid': userid,
         'user': users,     # keeping your template variable name
-        'tasks': tasks
+        'tasks': tasks,
+        'works': works
     })
+
+def sales_and_expenses_page(request, userid=None):
+    userid = request.session.get('userid')
+    sales_and_expenses = SalesAndExpenses.objects.last()
+    print(sales_and_expenses)
+    if not userid:
+        return redirect('login')  # or your login page
+    return render(request, 'sales.html', {'userid': userid, 'sales_and_expenses': sales_and_expenses})
+
+def sales(request,userid=None):
+    userid = request.session.get('userid')
+    if not userid:
+        return redirect('login')  # or your login page
+    
+    today = timezone.now().date().isoformat()
+
+    # Get or create today's record
+    sales_obj, created = SalesAndExpenses.objects.get_or_create(
+        salesData__date=today,
+        defaults={
+            "salesData": {
+                "date": today,
+                "income": [],
+                "outgoing": [],
+                "total_income": 0,
+                "total_outgoing": 0,
+                "remaining_amount": 0
+            }
+        }
+    )
+
+    if request.method == 'POST':
+        data = sales_obj.salesData
+        income_list = data.get('income', [])
+        s_no = len(income_list)
+        income_list.append({
+            "s_no": s_no,
+            "product": request.POST.get('product_name'),
+            "amount": float(request.POST.get('product_amount'))
+        })
+
+        # Recalculate totals
+        total_income = sum(i["amount"] for i in income_list)
+        total_outgoing = sum(o["amount"] for o in data.get("outgoing", []))
+
+        data.update({
+            "income": income_list,
+            "total_income": total_income,
+            "remaining_amount": total_income - total_outgoing
+        })
+
+        sales_obj.salesData = data
+        sales_obj.save()
+
+        messages.success(request, "Sales data updated successfully.")
+        return redirect('sales_and_expenses',userid=userid)
+    
+    return render(request, 'sales.html', {'userid': userid,})
+    
+
+def expenses(request, userid=None):
+    userid = request.session.get('userid')
+    if not userid:
+        return redirect('login')  # or your login page
+
+    today = timezone.now().date().isoformat()
+
+    # Get or create today's record
+    sales_obj, created = SalesAndExpenses.objects.get_or_create(
+        salesData__date=today,
+        defaults={
+            "salesData": {
+                "date": today,
+                "income": [],
+                "outgoing": [],
+                "total_income": 0,
+                "total_outgoing": 0,
+                "remaining_amount": 0
+            }
+        }
+    )
+
+    if request.method == "POST":
+        data = sales_obj.salesData
+        outgoing_list = data.get("outgoing", [])
+
+        # Auto S No: 0 → n
+        s_no = len(outgoing_list)
+
+        outgoing_list.append({
+            "s_no": s_no,
+            "name": request.POST.get("expense_name"),
+            "amount": float(request.POST.get("expense_amount", 0))
+        })
+
+        # Recalculate totals
+        total_income = sum(i["amount"] for i in data.get("income", []))
+        total_outgoing = sum(o["amount"] for o in outgoing_list)
+
+        data.update({
+            "outgoing": outgoing_list,
+            "total_outgoing": total_outgoing,
+            "remaining_amount": total_income - total_outgoing
+        })
+
+        sales_obj.salesData = data
+        sales_obj.save()
+
+        messages.success(request, "Expense added successfully.")
+        return redirect("sales_and_expenses", userid=userid)
+
+    return render(request, "sales.html", {"userid": userid})
+

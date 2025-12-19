@@ -38,6 +38,15 @@
                 <li class="nav-item">
                     <a href="{% url 'work_with_id' userid=userid %}" class="nav-link">Work</a>
                 </li>
+                <li class="nav-item">
+                    <a href="{% url 'sales_and_expenses' userid=userid %}" class="nav-link">Sales</a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
+                </li>
             </ul>
             {% else %}
             <!-- Navigation Links -->

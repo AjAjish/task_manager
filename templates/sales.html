@@ -1,0 +1,314 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sales & Expenses - Task Manager{% endblock %}
+
+{% block content %}
+<div class="sales-expenses-container">
+    
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1>Sales & Expenses</h1>
+            <p class="page-subtitle">Manage your sales records and expense tracking</p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="stats-overview">
+        <div class="stat-card stat-sales">
+            <div class="stat-icon">💰</div>
+            <div class="stat-details">
+                <span class="stat-label">Total Sales</span>
+                <span class="stat-value" id="totalSales">₹{{ sales_and_expenses.salesData.total_income|default_if_none:"0" }}</span>
+            </div>
+        </div>
+
+        <div class="stat-card stat-expenses">
+            <div class="stat-icon">💸</div>
+            <div class="stat-details">
+                <span class="stat-label">Total Expenses</span>
+                <span class="stat-value" id="totalExpenses">₹{{ sales_and_expenses.salesData.total_expenses|default:"0" }}</span>
+            </div>
+        </div>
+
+        <div class="stat-card stat-profit">
+            <div class="stat-icon">📈</div>
+            <div class="stat-details">
+                <span class="stat-label">Net Profit</span>
+                <span class="stat-value" id="netProfit">₹{{ sales_and_expenses.salesData.remaining_amount|default:"0" }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forms Grid -->
+    <div class="forms-grid">
+        
+        <!-- SALES FORM -->
+        <div class="form-box sales-form-box">
+            <div class="form-header">
+                <div class="form-icon">📊</div>
+                <h2>Add Sale</h2>
+            </div>
+            
+            <form method="POST" action="{% url 'sales_with_id' userid=userid %}" class="sales-form" id="salesForm">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label for="sales_no" class="form-label">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="9" y1="9" x2="15" y2="9"></line>
+                        </svg>
+                        Sales No
+                    </label>
+                    <input 
+                        type="number" 
+                        id="sales_no" 
+                        name="sales_no" 
+                        class="form-input" 
+                        placeholder="Enter sales number"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="product_name" class="form-label">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                        </svg>
+                        Product Name
+                    </label>
+                    <input 
+                        type="text" 
+                        id="product_name" 
+                        name="product_name" 
+                        class="form-input" 
+                        placeholder="Enter product name"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="product_amount" class="form-label">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="1" x2="12" y2="23"></line>
+                            <path d="M17 5H9. 5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                        </svg>
+                        Product Amount
+                    </label>
+                    <div class="input-group">
+                        <span class="input-prefix">₹</span>
+                        <input 
+                            type="number" 
+                            id="product_amount" 
+                            name="product_amount" 
+                            class="form-input input-with-prefix" 
+                            placeholder="0. 00"
+                            step="0.01"
+                            min="0"
+                            required
+                        >
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-sales">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Submit Sale
+                </button>
+            </form>
+        </div>
+
+        <!-- EXPENSES FORM -->
+        <div class="form-box expenses-form-box">
+            <div class="form-header">
+                <div class="form-icon">💳</div>
+                <h2>Add Expense</h2>
+            </div>
+            
+            <form method="POST" action="{% url 'expenses_with_id' userid=userid %}" class="expenses-form" id="expensesForm">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label for="expense_no" class="form-label">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="9" y1="9" x2="15" y2="9"></line>
+                        </svg>
+                        Expense No
+                    </label>
+                    <input 
+                        type="number" 
+                        id="expense_no" 
+                        name="expense_no" 
+                        class="form-input" 
+                        placeholder="Enter expense number"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="expense_name" class="form-label">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                        </svg>
+                        Expense Name
+                    </label>
+                    <input 
+                        type="text" 
+                        id="expense_name" 
+                        name="expense_name" 
+                        class="form-input" 
+                        placeholder="Enter expense name"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="expense_amount" class="form-label">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="1" x2="12" y2="23"></line>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                        </svg>
+                        Expense Amount
+                    </label>
+                    <div class="input-group">
+                        <span class="input-prefix">₹</span>
+                        <input 
+                            type="number" 
+                            id="expense_amount" 
+                            name="expense_amount" 
+                            class="form-input input-with-prefix" 
+                            placeholder="0.00"
+                            step="0.01"
+                            min="0"
+                            required
+                        >
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-expenses">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Submit Expense
+                </button>
+            </form>
+        </div>
+
+    </div>
+
+    <!-- Recent Transactions (Optional) -->
+    <div class="recent-transactions">
+        <div class="section-header">
+            <h2>Recent Transactions</h2>
+        </div>
+        
+        <div class="transactions-grid">
+            <!-- Recent Sales -->
+            <div class="transactions-box">
+                <h3>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                    Recent Sales
+                </h3>
+                <div class="transactions-list" id="recentSalesList">
+                    {% if sales_and_expenses.salesData.income %}
+                        {% for sale in sales_and_expenses.salesData.income %}
+                        <div class="transaction-item transaction-sale">
+                            <div class="transaction-info">
+                                <span class="transaction-name">{{ sale.product }}</span>
+                                <span class="transaction-id">#{{ sale.s_no }}</span>
+                            </div>
+                            <span class="transaction-amount">₹{{ sale.amount }}</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-transactions">
+                            <p>No sales recorded yet</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Recent Expenses -->
+            <div class="transactions-box">
+                <h3>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="15" y1="9" x2="9" y2="15"></line>
+                        <line x1="9" y1="9" x2="15" y2="15"></line>
+                    </svg>
+                    Recent Expenses
+                </h3>
+                <div class="transactions-list" id="recentExpensesList">
+                    {% if sales_and_expenses.salesData.outgoing %}
+                        {% for expense in sales_and_expenses.salesData.outgoing %}
+                        <div class="transaction-item transaction-expense">
+                            <div class="transaction-info">
+                                <span class="transaction-name">{{ expense.name }}</span>
+                                <span class="transaction-id">#{{ expense.s_no }}</span>
+                            </div>
+                            <span class="transaction-amount">₹{{ expense.amount }}</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-transactions">
+                            <p>No expenses recorded yet</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Show Django messages as toasts
+    {% if messages %}
+        {% for message in messages %}
+            {% if message.tags == 'success' %}
+                toast.success("{{ message }}", 4000, { title: 'Success' });
+            {% elif message.tags == 'error' %}
+                toast.error("{{ message }}", 4000, { title: 'Error' });
+            {% elif message.tags == 'warning' %}
+                toast.warning("{{ message }}", 4000, { title: 'Warning' });
+            {% else %}
+                toast.info("{{ message }}", 4000, { title: 'Info' });
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    // Form submission handling with toast
+    document.getElementById('salesForm').addEventListener('submit', function(e) {
+        // Form will submit normally, but show loading toast
+        toast.info('Submitting sale...', 2000);
+    });
+
+    document.getElementById('expensesForm').addEventListener('submit', function(e) {
+        // Form will submit normally, but show loading toast
+        toast.info('Submitting expense...', 2000);
+    });
+
+    // Input validation for amounts
+    const amountInputs = document.querySelectorAll('input[type="number"][step="0.01"]');
+    amountInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            if (this.value < 0) {
+                this. value = 0;
+                toast.warning('Amount cannot be negative', 2000);
+            }
+        });
+    });
+</script>
+{% endblock %}
