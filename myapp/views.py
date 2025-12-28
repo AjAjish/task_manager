@@ -1,7 +1,12 @@
 from django.shortcuts import render , redirect
 from django.contrib import messages
 from django.utils import timezone
-from .models import User, Task , Work , SalesAndExpenses
+from .models import User, Task , Work , SalesAndExpenses , RMA
+from django.http import JsonResponse
+import json 
+
+
+today = timezone.now().date().isoformat()
 
 # Create your views here.
 
@@ -195,8 +200,10 @@ def work(request,userid=None):
     })
 
 def sales_and_expenses_page(request, userid=None):
+    
     userid = request.session.get('userid')
-    sales_and_expenses = SalesAndExpenses.objects.last()
+    # To shoe only today sales and expenses record
+    sales_and_expenses = SalesAndExpenses.objects.filter(salesData__date=today).first()
     print(sales_and_expenses)
     if not userid:
         return redirect('login')  # or your login page
@@ -206,9 +213,7 @@ def sales(request,userid=None):
     userid = request.session.get('userid')
     if not userid:
         return redirect('login')  # or your login page
-    
-    today = timezone.now().date().isoformat()
-
+     
     # Get or create today's record
     sales_obj, created = SalesAndExpenses.objects.get_or_create(
         salesData__date=today,
@@ -258,8 +263,6 @@ def expenses(request, userid=None):
     if not userid:
         return redirect('login')  # or your login page
 
-    today = timezone.now().date().isoformat()
-
     # Get or create today's record
     sales_obj, created = SalesAndExpenses.objects.get_or_create(
         salesData__date=today,
@@ -306,3 +309,79 @@ def expenses(request, userid=None):
 
     return render(request, "sales.html", {"userid": userid})
 
+def rma(request, userid=None):
+    rma_list = RMA.objects.all()
+    print("RMA List:", rma_list)
+    rmaData = {}
+    userid = request.session.get('userid')
+    if not userid:
+        return redirect('login')  # or your login page
+    
+    for rma in rma_list:
+        rma.first_detail = (
+            next(iter(rma.rmaDetails.values()), {})
+            if isinstance(rma.rmaDetails, dict)
+            else {}
+        )
+
+    if request.method == 'POST':
+        to_address = request.POST.get('to_address')
+        product_name = request.POST.get('product_name')
+        serial_number = request.POST.get('serial_number')
+        quantity = request.POST.get('quantity')
+        sent_date = request.POST.get('sent_date')
+        problem_description = request.POST.get('problem_description')
+
+        print(f"RMA Submission - To: {to_address}, Product: {product_name}, Serial: {serial_number}, Quantity: {quantity}, Sent Date: {sent_date}, Problem: {problem_description}")  # Debugging line
+
+        rmaData = {
+            'to_address': to_address,
+            'product_name': product_name,
+            'serial_number': serial_number,
+            'quantity': quantity,
+            'sent_date': sent_date,
+            'problem_description': problem_description
+        }
+
+        RMA.objects.create(rmaDetails=rmaData)
+        messages.success(request, "RMA request submitted successfully.")
+        return redirect('rma', userid=userid)
+
+    return render(request, 'rma.html', {'userid': userid ,"rma_list": rma_list})
+
+def attendance_view(request, userid=None):
+    users = User.objects.all()
+    userid = request.session.get('userid')
+    if not userid:
+        return redirect('login')  # or your login page
+    return render(request, 'attendance.html', {'userid': userid , 'users': users})
+
+def attendance_submit(request, userid=None):
+    userid = request.session.get('userid')
+    users = User.objects.all()
+    if not userid:
+        return redirect('login')  # or your login page
+    
+    if request.method == 'POST':
+        try:
+
+            data = json.loads(request.body)
+
+            attendance_date = list(data.keys())[0]
+            attendance_items = data[attendance_date].get('AttendanceData', [])
+
+            print(f"Attendance Date: {attendance_date}, Items: {attendance_items}")  # Debugging line
+            messages.success(request, "Attendance submitted successfully.")
+            return JsonResponse({
+                "success": True,
+            })
+        except Exception as e:
+            print(f"Error processing attendance: {str(e)}")  # Debugging line
+            messages.error(request, "Failed to submit attendance.")
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+    return JsonResponse({'status': 'invalid method'}, status=405)
+
+def logout(request):
+    request.session.flush()
+    messages.success(request, 'Logged out successfully.')
+    return redirect('home')

@@ -1,0 +1,287 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Attendance System - Task Manager{% endblock %}
+
+{% block content %}
+<div class="attendance-container">
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1>Attendance Management</h1>
+            <p class="page-subtitle">Mark daily attendance for all users</p>
+        </div>
+        <div class="header-stats">
+            <div class="stat-badge">
+                <span class="badge-label">Total Users</span>
+                <span class="badge-value">{{ users|length }}</span>
+            </div>
+            <div class="stat-badge stat-present">
+                <span class="badge-label">Present</span>
+                <span class="badge-value" id="presentCount">0</span>
+            </div>
+            <div class="stat-badge stat-absent">
+                <span class="badge-label">Absent</span>
+                <span class="badge-value" id="absentCount">0</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Date Input with Card Wrapper -->
+    <div class="attendance-date-section">
+        <div class="date-card">
+            <div class="date-card-header">
+                <div class="date-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <h2>Select Attendance Date</h2>
+                </div>
+            </div>
+            <div class="date-card-body">
+                <div class="form-group">
+                    <label for="attendanceDate" class="form-label">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        Attendance Date
+                    </label>
+                    <input type="date" id="attendanceDate" class="form-input date-input">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance List Section -->
+    <div class="attendance-list-section">
+        <div class="list-card">
+            
+            <!-- List Card Header (Optional Search Bar) -->
+            <div class="list-card-header">
+                <div class="list-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    <h2>User Attendance ({{ users|length }})</h2>
+                </div>
+                <div class="list-search">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    <input type="text" id="searchUser" placeholder="Search users..." class="search-input" onkeyup="filterUsers()">
+                </div>
+            </div>
+
+            <!-- Attendance List -->
+            <div class="attendance-list" id="attendanceList">
+
+                {% for user in users %}
+                <div class="attendance-item"
+                     data-user-id="{{ user.id }}"
+                     data-user-name="{{ user.username }}">
+
+                    <div class="user-info">
+                        <div class="user-avatar">
+                            <span>{{ user.username|slice:":1"|upper }}</span>
+                        </div>
+                        <div class="user-details">
+                            <h4 class="user-name">{{ user.username }}</h4>
+                            <p class="user-email">{{ user.email|default:"No email" }}</p>
+                        </div>
+                    </div>
+
+                    <div class="attendance-status" id="status-{{ user.id }}">
+                        <span class="status-label">Not Marked</span>
+                    </div>
+
+                    <div class="attendance-actions">
+                        <button
+                            type="button"
+                            class="btn-attendance btn-present"
+                            data-user-id="{{ user.id }}"
+                            data-user-name="{{ user.username }}"
+                            onclick="handleAttendanceClick(this, 'present')">
+                            Present
+                        </button>
+
+                        <button
+                            type="button"
+                            class="btn-attendance btn-absent"
+                            data-user-id="{{ user.id }}"
+                            data-user-name="{{ user.username }}"
+                            onclick="handleAttendanceClick(this, 'absent')">
+                            Absent
+                        </button>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state">
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                    </svg>
+                    <h3>No Users Found</h3>
+                    <p>There are no users to mark attendance for</p>
+                </div>
+                {% endfor %}
+
+            </div>
+
+            <!-- List Footer -->
+            <div class="list-footer">
+                <div class="footer-info">
+                    <span id="markedCount">0</span> of <span>{{ users|length }}</span> marked
+                </div>
+                <button class="btn btn-primary btn-submit" id="submitBtn" onclick="submitAttendance()">
+                    Submit Attendance
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<form style="display:none;">{% csrf_token %}</form>
+
+<script>
+/* ================================
+   ATTENDANCE MANAGEMENT (FINAL)
+================================ */
+
+let attendanceData = {};
+
+/* Init */
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('attendanceDate').value =
+        new Date().toISOString().split('T')[0];
+    updateCounts();
+});
+
+/* Click handler */
+function handleAttendanceClick(btn, status) {
+    const userId = btn.dataset.userId;
+    const userName = btn.dataset.userName;
+    markAttendance(userId, userName, status);
+}
+
+/* Core logic */
+function markAttendance(userId, userName, status) {
+
+    attendanceData[userId] = {
+        name: userName,
+        status: status
+    };
+
+    const statusEl = document.getElementById(`status-${userId}`);
+    const item = document.querySelector(
+        `.attendance-item[data-user-id="${userId}"]`
+    );
+
+    item.classList.remove('marked-present', 'marked-absent');
+
+    if (status === 'present') {
+        statusEl.innerHTML =
+            '<span class="status-label status-present">✓ Present</span>';
+        item.classList.add('marked-present');
+    } else {
+        statusEl.innerHTML =
+            '<span class="status-label status-absent">✗ Absent</span>';
+        item.classList.add('marked-absent');
+    }
+
+    updateCounts();
+}
+
+/* Counters */
+function updateCounts() {
+    let present = 0;
+    let absent = 0;
+
+    Object.values(attendanceData).forEach(r => {
+        if (r.status === 'present') present++;
+        if (r.status === 'absent') absent++;
+    });
+
+    document.getElementById('presentCount').textContent = present;
+    document.getElementById('absentCount').textContent = absent;
+    document.getElementById('markedCount').textContent = present + absent;
+}
+
+/* Search filter */
+function filterUsers() {
+    const searchTerm =
+        document.getElementById('searchUser').value.toLowerCase();
+
+    document.querySelectorAll('.attendance-item').forEach(item => {
+        const userName =
+            item.getAttribute('data-user-name').toLowerCase();
+        item.style.display =
+            userName.includes(searchTerm) ? '' : 'none';
+    });
+}
+
+/* Submit */
+function submitAttendance() {
+
+    if (Object.keys(attendanceData).length === 0) {
+        alert('Please mark attendance');
+        return;
+    }
+
+    const date = document.getElementById('attendanceDate').value;
+    const csrftoken =
+        document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    const payload = {
+        [date]: {
+            AttendanceData: Object.values(attendanceData)
+        }
+    };
+
+    fetch("{% url 'attendance_submit' userid=userid %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            resetAttendance();
+            window.location.reload();
+        } else {
+            alert(data.message || 'Submission failed');
+        }
+    })
+    .catch(() => alert('Server error'));
+}
+
+/* Reset */
+function resetAttendance() {
+    attendanceData = {};
+
+    document.querySelectorAll('.attendance-status').forEach(el => {
+        el.innerHTML = '<span class="status-label">Not Marked</span>';
+    });
+
+    document.querySelectorAll('.attendance-item').forEach(el => {
+        el.classList.remove('marked-present', 'marked-absent');
+    });
+
+    document.getElementById('searchUser').value = '';
+    updateCounts();
+}
+</script>
+{% endblock %}

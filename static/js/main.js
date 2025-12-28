@@ -12,10 +12,10 @@ if (hamburger && navMenu) {
 
     // Close menu when clicking outside
     document.addEventListener('click', function(event) {
-        const isClickInsideNav = navMenu.contains(event. target);
+        const isClickInsideNav = navMenu.contains(event.target);
         const isClickOnHamburger = hamburger.contains(event.target);
 
-        if (!isClickInsideNav && ! isClickOnHamburger && navMenu.classList.contains('active')) {
+        if (!isClickInsideNav && !isClickOnHamburger && navMenu.classList.contains('active')) {
             hamburger.classList.remove('active');
             navMenu.classList.remove('active');
         }
@@ -24,7 +24,7 @@ if (hamburger && navMenu) {
     // Close menu when clicking on a nav link (mobile)
     const navLinks = document.querySelectorAll('.nav-link');
     navLinks.forEach(link => {
-        link. addEventListener('click', function() {
+        link.addEventListener('click', function() {
             if (window.innerWidth <= 768) {
                 hamburger.classList.remove('active');
                 navMenu.classList.remove('active');
@@ -82,9 +82,9 @@ window.addEventListener('scroll', function() {
 // ============================================
 function setActiveNavLink() {
     const currentPath = window.location.pathname;
-    const navLinks = document. querySelectorAll('.nav-link');
+    const navLinks = document.querySelectorAll('.nav-link');
     
-    navLinks. forEach(link => {
+    navLinks.forEach(link => {
         const linkPath = new URL(link.href).pathname;
         
         if (linkPath === currentPath) {
@@ -117,7 +117,7 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 // ============================================
 // FORM INPUT ANIMATIONS
 // ============================================
-const formInputs = document.querySelectorAll('. form-input, .form-textarea, .form-select');
+const formInputs = document.querySelectorAll('.form-input, .form-textarea, .form-select');
 
 formInputs.forEach(input => {
     // Add focus effect
@@ -160,7 +160,7 @@ const observer = new IntersectionObserver(function(entries) {
 }, observerOptions);
 
 // Observe elements with animation classes
-const animatedElements = document.querySelectorAll('. stat-card, .form-section, .activity-item');
+const animatedElements = document.querySelectorAll('.stat-card, .form-section, .activity-item');
 animatedElements.forEach(element => {
     element.style.opacity = '0';
     element.style.transform = 'translateY(20px)';
@@ -226,220 +226,233 @@ window.addEventListener('load', function() {
 });
 
 // ============================================
-// TOAST NOTIFICATION SYSTEM
+// TOAST HANDLER - 5 Second Display
 // ============================================
 
-/**
- * Toast Notification Manager
- * Provides modern, Apple-style toast notifications
- */
-class ToastManager {
-    constructor() {
-        this.container = document.getElementById('toastContainer');
-        this.toasts = [];
-        this.maxToasts = 5;
-        this.defaultDuration = 3000;
-    }
+(function() {
+  'use strict';
 
-    /**
-     * Show a toast notification
-     * @param {string} message - The message to display
-     * @param {string} type - Type of toast:  'success', 'error', 'warning', 'info'
-     * @param {number} duration - Duration in milliseconds (0 for persistent)
-     * @param {object} options - Additional options
-     */
-    show(message, type = 'info', duration = this.defaultDuration, options = {}) {
-        // Remove oldest toast if limit reached
-        if (this.toasts.length >= this.maxToasts) {
-            this.remove(this.toasts[0]);
-        }
+  // ============================================
+  // NAVBAR SCROLL EFFECT
+  // ============================================
+  function initNavbarScroll() {
+    const navbar = document.querySelector('.navbar');
+    if (!navbar) return;
 
-        // Create toast element
-        const toast = this.createToast(message, type, options);
-        
-        // Add to container and tracking array
-        this.container.appendChild(toast);
-        this.toasts.push(toast);
+    const handleScroll = () => {
+      if (window.scrollY > 50) {
+        navbar.classList.add('scrolled');
+      } else {
+        navbar.classList.remove('scrolled');
+      }
+    };
 
-        // Trigger animation
-        setTimeout(() => {
-            toast.classList.add('show');
-        }, 10);
-
-        // Auto remove after duration (if not persistent)
-        if (duration > 0) {
-            setTimeout(() => {
-                this.remove(toast);
-            }, duration);
-        }
-
-        return toast;
-    }
-
-    /**
-     * Create toast element
-     * @private
-     */
-    createToast(message, type, options) {
-        const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
-        
-        // Add custom class if provided
-        if (options.className) {
-            toast.classList.add(options.className);
-        }
-
-        // Get icon based on type
-        const icon = this.getIcon(type);
-
-        // Create toast HTML
-        toast.innerHTML = `
-            <div class="toast-icon">
-                ${icon}
-            </div>
-            <div class="toast-content">
-                ${options.title ? `<div class="toast-title">${options.title}</div>` : ''}
-                <div class="toast-message">${message}</div>
-            </div>
-            <button class="toast-close" aria-label="Close notification">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </button>
-        `;
-
-        // Add close button functionality
-        const closeBtn = toast.querySelector('.toast-close');
-        closeBtn.addEventListener('click', () => {
-            this.remove(toast);
+    // Throttle scroll event for performance
+    let ticking = false;
+    window.addEventListener('scroll', function() {
+      if (!ticking) {
+        window.requestAnimationFrame(function() {
+          handleScroll();
+          ticking = false;
         });
-
-        // Add click action if provided
-        if (options.onClick) {
-            toast.style.cursor = 'pointer';
-            toast.addEventListener('click', (e) => {
-                if (! e.target.closest('.toast-close')) {
-                    options. onClick();
-                }
-            });
-        }
-
-        return toast;
-    }
-
-    /**
-     * Get icon SVG based on toast type
-     * @private
-     */
-    getIcon(type) {
-        const icons = {
-            success: `
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <path d="M22 11. 08V12a10 10 0 1 1-5.93-9.14"></path>
-                    <polyline points="22 4 12 14. 01 9 11.01"></polyline>
-                </svg>
-            `,
-            error: `
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="15" y1="9" x2="9" y2="15"></line>
-                    <line x1="9" y1="9" x2="15" y2="15"></line>
-                </svg>
-            `,
-            warning: `
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <path d="M10. 29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                    <line x1="12" y1="9" x2="12" y2="13"></line>
-                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                </svg>
-            `,
-            info: `
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="16" x2="12" y2="12"></line>
-                    <line x1="12" y1="8" x2="12. 01" y2="8"></line>
-                </svg>
-            `
-        };
-
-        return icons[type] || icons. info;
-    }
-
-    /**
-     * Remove a toast
-     * @param {HTMLElement} toast - Toast element to remove
-     */
-    remove(toast) {
-        if (! toast) return;
-
-        // Add exit animation
-        toast.classList.add('hide');
-
-        // Remove from DOM and tracking array
-        setTimeout(() => {
-            if (toast.parentElement) {
-                toast.parentElement.removeChild(toast);
-            }
-            this.toasts = this.toasts.filter(t => t !== toast);
-        }, 300);
-    }
-
-    /**
-     * Remove all toasts
-     */
-    removeAll() {
-        this.toasts.forEach(toast => this.remove(toast));
-    }
-
-    /**
-     * Shorthand methods for different toast types
-     */
-    success(message, duration, options) {
-        return this.show(message, 'success', duration, options);
-    }
-
-    error(message, duration, options) {
-        return this.show(message, 'error', duration, options);
-    }
-
-    warning(message, duration, options) {
-        return this.show(message, 'warning', duration, options);
-    }
-
-    info(message, duration, options) {
-        return this.show(message, 'info', duration, options);
-    }
-}
-
-// Create global toast instance
-const toast = new ToastManager();
-
-// Make it available globally
-window.toast = toast;
-
-// ============================================
-// USAGE EXAMPLES (Remove in production)
-// ============================================
-
-// Example:  Show toast on page load (for demonstration)
-// Uncomment to test
-/*
-document.addEventListener('DOMContentLoaded', function() {
-    // Success toast
-    toast.success('Welcome to TaskFlow!', 3000, {
-        title: 'Success'
+        ticking = true;
+      }
     });
 
-    // Info toast after delay
+    // Check scroll position on load
+    handleScroll();
+  }
+
+  // ============================================
+  // TOAST NOTIFICATION FUNCTIONS
+  // ============================================
+  
+  /**
+   * Hide toast notification
+   */
+  window.hideToast = function() {
+    const toast = document.getElementById('toast');
+    if (toast) {
+      toast.classList.remove('show');
+      toast.classList.add('hide');
+      
+      // Remove from DOM after animation
+      setTimeout(() => {
+        if (toast.parentElement) {
+          toast.style.display = 'none';
+        }
+      }, 400);
+    }
+  };
+
+  /**
+   * Show toast notification
+   * @param {string} message - The message to display
+   * @param {string} type - Type:  'success', 'error', 'warning', 'info'
+   * @param {number} duration - Duration in milliseconds (default: 5000 = 5 seconds)
+   */
+  window.showToast = function(message, type = 'info', duration = 5000) {
+    let toast = document.getElementById('toast');
+    
+    // Create toast if it doesn't exist
+    if (! toast) {
+      toast = document.createElement('div');
+      toast.id = 'toast';
+      toast.className = 'toast';
+      document.body.appendChild(toast);
+    }
+
+    // Reset classes
+    toast.className = 'toast';
+    toast.style.display = 'flex';
+    
+    // Add type class
+    if (type) {
+      toast.classList.add(`toast-${type}`);
+    }
+
+    // Set icon based on type
+    let icon = 'ℹ️';
+    switch(type) {
+      case 'success':
+        icon = '✅';
+        break;
+      case 'error': 
+        icon = '❌';
+        break;
+      case 'warning':
+        icon = '⚠️';
+        break;
+      default:
+        icon = 'ℹ️';
+    }
+
+    // Set content
+    toast.innerHTML = `
+      <div class="toast-content">
+        <span class="toast-icon">${icon}</span>
+        <div class="toast-message">${message}</div>
+      </div>
+      <button class="toast-close-btn" onclick="hideToast()" aria-label="Close">×</button>
+    `;
+
+    // Show toast
     setTimeout(() => {
-        toast.info('Check out the dashboard for your tasks', 3000);
-    }, 500);
-});
-*/
+      toast.classList.add('show');
+    }, 10);
+
+    // Auto-hide after 5 seconds (or custom duration)
+    if (duration > 0) {
+      setTimeout(() => {
+        hideToast();
+      }, duration);
+    }
+  };
+
+  /**
+   * Auto-show Django messages on page load
+   * FIXED: Now shows for exactly 5 seconds
+   */
+  function initDjangoMessages() {
+    const toast = document.getElementById('toast');
+    if (toast) {
+      // Show toast after 100ms delay
+      setTimeout(() => {
+        toast.classList.add('show');
+      }, 100);
+
+      // Auto-hide after exactly 5 seconds (5000ms)
+      setTimeout(() => {
+        hideToast();
+      }, 5100); // 100ms delay + 5000ms display = 5100ms total
+    }
+  }
+
+  // ============================================
+  // PROFILE DROPDOWN
+  // ============================================
+  function initProfileDropdown() {
+    const toggleBtn = document.getElementById('profileToggle');
+    const menu = document.getElementById('profileMenu');
+    const arrow = document.getElementById('arrow');
+
+    if (!toggleBtn || !menu || !arrow) return;
+
+    // Toggle dropdown
+    toggleBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const isVisible = menu.classList.contains('show');
+      
+      if (isVisible) {
+        menu.classList.remove('show');
+        arrow.style.transform = 'rotate(0deg)';
+      } else {
+        menu.classList.add('show');
+        arrow.style.transform = 'rotate(180deg)';
+      }
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!toggleBtn.contains(e.target) && !menu.contains(e.target)) {
+        menu.classList.remove('show');
+        arrow.style.transform = 'rotate(0deg)';
+      }
+    });
+
+    // Prevent dropdown from closing when clicking inside menu
+    menu.addEventListener('click', function(e) {
+      e.stopPropagation();
+    });
+  }
+
+  // ============================================
+  // INITIALIZATION
+  // ============================================
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize all components
+    initNavbarScroll();
+    initDjangoMessages();
+    initProfileDropdown();
+  });
+
+  // ============================================
+  // HELPER FUNCTIONS
+  // All helper functions default to 5 seconds
+  // ============================================
+  
+  /**
+   * Show success toast (5 seconds default)
+   */
+  window.toastSuccess = function(message, duration = 5000) {
+    showToast(message, 'success', duration);
+  };
+
+  /**
+   * Show error toast (5 seconds default)
+   */
+  window.toastError = function(message, duration = 5000) {
+    showToast(message, 'error', duration);
+  };
+
+  /**
+   * Show warning toast (5 seconds default)
+   */
+  window.toastWarning = function(message, duration = 5000) {
+    showToast(message, 'warning', duration);
+  };
+
+  /**
+   * Show info toast (5 seconds default)
+   */
+  window.toastInfo = function(message, duration = 5000) {
+    showToast(message, 'info', duration);
+  };
+
+})();
 
 // ============================================
-// CONSOLE MESSAGE (Optional)
+// CONSOLE BRANDING (Optional)
 // ============================================
-console.log('%c TaskFlow ', 'background:  #007AFF; color: white; font-size: 20px; padding: 10px; border-radius: 5px;');
-console.log('%c Built with ❤️ using Django Templates', 'color: #6E6E73; font-size: 12px;');
+console.log('%c TaskFlow ', 'background: #007AFF; color: white; font-size: 20px; padding: 10px; border-radius: 5px;');
+console.log('%c Built with ❤️ using Django', 'color: #6E6E73; font-size: 12px;');

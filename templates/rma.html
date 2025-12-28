@@ -1,0 +1,423 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}RMA - Return Merchandise Authorization{% endblock %}
+
+{% block content %}
+<div class="rma-container">
+    
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1>Return Merchandise Authorization</h1>
+            <p class="page-subtitle">Submit and track product return requests</p>
+        </div>
+        <div class="header-stats">
+            <div class="stat-badge">
+                <span class="badge-label">Total RMA Requests</span>
+                <span class="badge-value">{{ rma_list|length|default:0 }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- RMA Form Section -->
+    <div class="rma-form-section">
+        <div class="form-card">
+            <div class="form-card-header">
+                <div class="form-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    <h2>Submit New RMA Request</h2>
+                </div>
+                <p class="form-description">Please fill out all required fields to submit your return request</p>
+            </div>
+
+            <form method="POST" action="{% url 'rma' userid=userid %}" class="rma-form" id="rmaForm">
+                {% csrf_token %}
+
+                <div class="form-row">
+                    <div class="form-group form-group-full">
+                        <label for="to_address" class="form-label required">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                <circle cx="12" cy="10" r="3"></circle>
+                            </svg>
+                            To Address
+                        </label>
+                        <textarea 
+                            id="to_address" 
+                            name="to_address" 
+                            class="form-textarea" 
+                            rows="4" 
+                            placeholder="Enter complete shipping address including street, city, state, and ZIP code"
+                            required
+                        ></textarea>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="product_name" class="form-label required">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                            </svg>
+                            Product Name
+                        </label>
+                        <input 
+                            type="text" 
+                            id="product_name" 
+                            name="product_name" 
+                            class="form-input" 
+                            placeholder="e. g., Laptop, Monitor, Keyboard"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="serial_number" class="form-label required">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="3" y1="9" x2="21" y2="9"></line>
+                                <line x1="9" y1="21" x2="9" y2="9"></line>
+                            </svg>
+                            Serial Number
+                        </label>
+                        <input 
+                            type="text" 
+                            id="serial_number" 
+                            name="serial_number" 
+                            class="form-input" 
+                            placeholder="e.g., SN123456789"
+                            required
+                        >
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="quantity" class="form-label required">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="8" y1="6" x2="21" y2="6"></line>
+                                <line x1="8" y1="12" x2="21" y2="12"></line>
+                                <line x1="8" y1="18" x2="21" y2="18"></line>
+                                <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                                <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                                <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                            </svg>
+                            Quantity
+                        </label>
+                        <input 
+                            type="number" 
+                            id="quantity" 
+                            name="quantity" 
+                            class="form-input" 
+                            placeholder="Enter quantity"
+                            min="1"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sent_date" class="form-label required">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                            Date
+                        </label>
+                        <input 
+                            type="date" 
+                            id="sent_date" 
+                            name="sent_date" 
+                            class="form-input" 
+                            required
+                        >
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group form-group-full">
+                        <label for="problem_description" class="form-label required">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                            Problem Description
+                        </label>
+                        <textarea 
+                            id="problem_description" 
+                            name="problem_description" 
+                            class="form-textarea" 
+                            rows="5" 
+                            placeholder="Please describe the issue in detail including any error messages, symptoms, or defects observed"
+                            required
+                        ></textarea>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="reset" class="btn btn-secondary">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="1 4 1 10 7 10"></polyline>
+                            <polyline points="23 20 23 14 17 14"></polyline>
+                            <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+                        </svg>
+                        Reset Form
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        Submit RMA Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- RMA Records Table Section -->
+    <div class="rma-table-section">
+        <div class="table-card">
+            <div class="table-card-header">
+                <div class="table-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                    </svg>
+                    <h2>RMA Records</h2>
+                </div>
+                <div class="table-search">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    <input type="text" id="tableSearch" placeholder="Search records..." class="search-input">
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                {% if rma_list %}
+                <table class="rma-table">
+                    <thead>
+                        <tr>
+                            <th class="th-id">
+                                <div class="th-content">
+                                    <span>#</span>
+                                </div>
+                            </th>
+                            <th class="th-address">
+                                <div class="th-content">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                        <circle cx="12" cy="10" r="3"></circle>
+                                    </svg>
+                                    <span>Address</span>
+                                </div>
+                            </th>
+                            <th class="th-product">
+                                <div class="th-content">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                    </svg>
+                                    <span>Product Name</span>
+                                </div>
+                            </th>
+                            <th class="th-serial">
+                                <div class="th-content">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    </svg>
+                                    <span>Serial Number</span>
+                                </div>
+                            </th>
+                            <th class="th-quantity">
+                                <div class="th-content">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="8" y1="6" x2="21" y2="6"></line>
+                                        <line x1="8" y1="12" x2="21" y2="12"></line>
+                                    </svg>
+                                    <span>Quantity</span>
+                                </div>
+                            </th>
+                            <th class="th-problem">
+                                <div class="th-content">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                                    </svg>
+                                    <span>Problem</span>
+                                </div>
+                            </th>
+                            <th class="th-date">
+                                <div class="th-content">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                                    </svg>
+                                    <span>Date</span>
+                                </div>
+                            </th>
+                            <th class="th-actions">
+                                <div class="th-content">
+                                    <span>Actions</span>
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="rmaTableBody">
+                        {% for rma in rma_list %}
+                        <tr class="table-row">
+                            <td class="td-id">
+                                <span class="id-badge">{{ forloop.counter }}</span>
+                            </td>
+                            <td class="td-address">
+                                <div class="address-cell">
+                                    {{ rma.rmaDetails.to_address|truncatewords:10|default_if_none:"N/A" }}
+                                </div>
+                            </td>
+                            <td class="td-product">
+                                <div class="product-cell">
+                                    <span class="product-name">{{ rma.rmaDetails.product_name|default_if_none:"N/A" }}</span>
+                                </div>
+                            </td>
+                            <td class="td-serial">
+                                <span class="serial-badge">{{ rma.rmaDetails.serial_number|default_if_none:"N/A" }}</span>
+                            </td>
+                            <td class="td-quantity">
+                                <span class="quantity-badge">{{ rma.rmaDetails.quantity|default_if_none:"N/A" }}</span>
+                            </td>
+                            <td class="td-problem">
+                                <div class="problem-cell" title="{{ rma.rmaDetails.problem_description }}">
+                                    {{ rma.rmaDetails.problem_description|truncatewords:8|default_if_none:"N/A" }}
+                                </div>
+                            </td>
+                            <td class="td-date">
+                                <span class="date-badge">{{ rma.rmaDetails.sent_date|date:"M d, Y"|default_if_none:"N/A" }}</span>
+                            </td>
+                            <td class="td-actions">
+                                <div class="action-buttons">
+                                    <button class="btn-icon btn-view" title="View Details" onclick="viewRMA({{ rma.id }})">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                    </button>
+                                    <button class="btn-icon btn-edit" title="Edit" onclick="editRMA({{ rma.id }})">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                        </svg>
+                                    </button>
+                                    <button class="btn-icon btn-delete" title="Delete" onclick="deleteRMA({{ rma.id }})">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="3 6 5 6 21 6"></polyline>
+                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-table-state">
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1. 5">
+                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                    </svg>
+                    <h3>No RMA Records Found</h3>
+                    <p>Submit your first RMA request using the form above</p>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if rma_list %}
+            <div class="table-footer">
+                <div class="table-info">
+                    Showing <strong>{{ rma_list|length }}</strong> record{{ rma_list|length|pluralize }}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    
+    // Set today's date as default
+    document. addEventListener('DOMContentLoaded', function() {
+        const dateInput = document.getElementById('rma_date');
+        if (dateInput && ! dateInput.value) {
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.value = today;
+        }
+    });
+
+    // Form submission handling
+    document.getElementById('rmaForm').addEventListener('submit', function(e) {
+        toast.info('Submitting RMA request...', 2000);
+    });
+
+    // Table search functionality
+    const searchInput = document.getElementById('tableSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const tableRows = document.querySelectorAll('#rmaTableBody tr');
+
+            tableRows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    }
+
+    // Action button functions
+    function viewRMA(id) {
+        toast.info(`Viewing RMA #${id}`, 2000);
+        // Add your view logic here
+    }
+
+    function editRMA(id) {
+        toast.info(`Editing RMA #${id}`, 2000);
+        // Add your edit logic here
+    }
+
+    function deleteRMA(id) {
+        if (confirm('Are you sure you want to delete this RMA record?')) {
+            toast.warning(`Deleting RMA #${id}`, 2000);
+            // Add your delete logic here
+        }
+    }
+
+    Form validation
+    const quantityInput = document.getElementById('quantity');
+    if (quantityInput) {
+        quantityInput. addEventListener('input', function() {
+            if (this.value < 1) {
+                this. value = 1;
+                toast.warning('Quantity must be at least 1', 2000);
+            }
+        });
+    }
+</script>
+{% endblock %}

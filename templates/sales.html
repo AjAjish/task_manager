@@ -28,7 +28,7 @@
             <div class="stat-icon">💸</div>
             <div class="stat-details">
                 <span class="stat-label">Total Expenses</span>
-                <span class="stat-value" id="totalExpenses">₹{{ sales_and_expenses.salesData.total_expenses|default:"0" }}</span>
+                <span class="stat-value" id="totalExpenses">₹{{ sales_and_expenses.salesData.total_outgoing|default:"0" }}</span>
             </div>
         </div>
 
@@ -274,21 +274,7 @@
 
 {% block extra_js %}
 <script>
-    // Show Django messages as toasts
-    {% if messages %}
-        {% for message in messages %}
-            {% if message.tags == 'success' %}
-                toast.success("{{ message }}", 4000, { title: 'Success' });
-            {% elif message.tags == 'error' %}
-                toast.error("{{ message }}", 4000, { title: 'Error' });
-            {% elif message.tags == 'warning' %}
-                toast.warning("{{ message }}", 4000, { title: 'Warning' });
-            {% else %}
-                toast.info("{{ message }}", 4000, { title: 'Info' });
-            {% endif %}
-        {% endfor %}
-    {% endif %}
-
+    
     // Form submission handling with toast
     document.getElementById('salesForm').addEventListener('submit', function(e) {
         // Form will submit normally, but show loading toast

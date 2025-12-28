@@ -38,4 +38,21 @@ class SalesAndExpenses(models.Model):
     salesData = models.JSONField(default=dict)
 
     def __str__(self):
-        return f"Total Income: {self.salesData.get('total_income', 0)} and Total Expenses: {self.salesData.get('total_expenses', 0)}"
+        return f"Total Income: {self.salesData.get('total_income', 0)} and Total Expenses: {self.salesData.get('total_outgoing', 0)}"
+    
+
+class RMA(models.Model):
+    rmaid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    rmaDetails = models.JSONField(default=dict)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"RMA Data: {self.rmaDetails}"
+    
+class Attendance(models.Model):
+    attendanceid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    attendanceDetails = models.JSONField(default=dict)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"Attendance Data: {self.attendanceDetails}"

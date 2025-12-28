@@ -42,10 +42,19 @@
                     <a href="{% url 'sales_and_expenses' userid=userid %}" class="nav-link">Sales</a>
                 </li>
                 <li class="nav-item">
-                    <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
+                    <a href="{% url 'rma' userid=userid %}" class="nav-link">RMA</a>
                 </li>
                 <li class="nav-item">
-                    <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
+                    <a href="{% url 'attendance' userid=userid %}" class="nav-link">Attendance</a>
+                </li>
+                <li class="nav-item nav-item-logout">
+                    <a href="{% url 'logout' %}" class="nav-link logout-btn logout-btn-icon" title="Logout" onclick="return confirm('Are you sure you want to logout?');">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                    </a>
                 </li>
             </ul>
             {% else %}
@@ -100,6 +109,33 @@
         {% block content %}
         {% endblock %}
     </main>
+
+    <!-- Enhanced Toast Message -->
+    {% if messages %}
+      <div id="toast" class="toast show">
+        <div class="toast-content">
+          <span class="toast-icon">
+            {% for message in messages %}
+              {% if message.tags == 'success' %}
+                ✅
+              {% elif message.tags == 'error' %}
+                ❌
+              {% elif message.tags == 'warning' %}
+                ⚠️
+              {% else %}
+                ℹ️
+              {% endif %}
+            {% endfor %}
+          </span>
+          <div class="toast-message">
+            {% for message in messages %}
+              {{ message }}
+            {% endfor %}
+          </div>
+        </div>
+        <button class="close-btn" onclick="hideToast()">×</button>
+      </div>
+    {% endif %}
 
     <!-- Footer -->
     <footer class="footer">

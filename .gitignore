@@ -212,3 +212,6 @@ __marimo__/
 # Python cache files
 __pycache__/
 *.py[cod]
+
+# Django stuff:
+migrations/
