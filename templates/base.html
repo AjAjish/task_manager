@@ -33,7 +33,7 @@
                     <a href="{% url 'dashboard_with_id' userid=userid %}" class="nav-link">Dashboard</a>
                 </li>
                 <li class="nav-item">
-                    <a href="{% url 'task_with_id' userid=userid %}" class="nav-link">Task</a>
+                    <a href="{% url 'task_with_id' userid=userid %}" class="nav-link">Job Card</a>
                 </li>
                 <li class="nav-item">
                     <a href="{% url 'work_with_id' userid=userid %}" class="nav-link">Work</a>
@@ -68,9 +68,6 @@
                 </li>
                 <li class="nav-item">
                     <a href="{% url 'login' %}" class="nav-link">Login</a>
-                </li>
-                <li class="nav-item">
-                    <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
                 </li>
             </ul>
             {% endif %}

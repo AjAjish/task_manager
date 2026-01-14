@@ -303,7 +303,7 @@
                                 </div>
                             </td>
                             <td class="td-date">
-                                <span class="date-badge">{{ rma.rmaDetails.sent_date|date:"M d, Y"|default_if_none:"N/A" }}</span>
+                                <span class="date-badge">{{ rma.rmaDetails.sent_date|default_if_none:"N/A" }}</span>
                             </td>
                             <td class="td-actions">
                                 <div class="action-buttons">
@@ -409,7 +409,6 @@
         }
     }
 
-    Form validation
     const quantityInput = document.getElementById('quantity');
     if (quantityInput) {
         quantityInput. addEventListener('input', function() {

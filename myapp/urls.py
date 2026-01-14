@@ -1,9 +1,9 @@
-from .views import home,register,login,dashboard,task,work,sales,expenses,sales_and_expenses_page,rma,attendance_view,attendance_submit,logout
+from .views import home,register,login,dashboard,task,work,sales,expenses,sales_and_expenses_page,rma,attendance_view,attendance_submit,logout,home_view
 from django.urls import path
 
 urlpatterns = [
-    path('', home, name='home'),
-    path('home/<uuid:userid>/', home, name='home_with_id'),
+    path('', home_view, name='home'),
+    path('home/<uuid:userid>/', home_view, name='home_with_id'),
     path('register/', register, name='register'),
     path('login/', login, name='login'),
     path('dashboard/', dashboard, name='dashboard'),

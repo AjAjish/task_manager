@@ -1,10 +1,10 @@
 from django.shortcuts import render , redirect
 from django.contrib import messages
 from django.utils import timezone
-from .models import User, Task , Work , SalesAndExpenses , RMA
+from .models import User, Task , Work , SalesAndExpenses , RMA , Attendance
 from django.http import JsonResponse
 import json 
-
+from datetime import datetime
 
 today = timezone.now().date().isoformat()
 
@@ -15,6 +15,12 @@ def home(request,userid=None):
     if userid:
         return render(request, 'base.html', {'userid': userid})
     return render(request, 'base.html')
+
+def home_view(request,userid=None)  :
+    userid = request.session.get('userid')
+    if userid:
+        return render(request, 'home.html', {'userid': userid})
+    return render(request, 'home.html')
 
 def register(request):
     if request.method == 'POST':
@@ -80,9 +86,24 @@ def login(request):
     return render(request, 'login.html')
 
 def dashboard(request,userid=None):
+    users = User.objects.all()
+    tasks = Task.objects.all()
+    works = Work.objects.all()
+    rma_list = RMA.objects.all()
+    attendance_list = Attendance.objects.all()
+    sales_and_expenses = SalesAndExpenses.objects.all()
+
     userid = request.session.get('userid')
     if userid:
-        return render(request, 'dashboard.html', {'userid': userid})
+        return render(request, 'dashboard.html', {
+            'userid': userid,
+            'users': users,
+            'tasks': tasks,
+            'works': works,
+            'rma_list': rma_list,
+            'attendance_list': attendance_list,
+            'slaes_and_expenses' : sales_and_expenses
+        })
     return render(request, 'dashboard.html')
 
 def task(request,userid=None):
@@ -101,6 +122,7 @@ def task(request,userid=None):
             systemType = request.POST.get('systemType')
             brand = request.POST.get('brand')
             model = request.POST.get('model')
+            serial_number = request.POST.get('serial_number')
             issueDescription = request.POST.get('issueDescription')
             entryDate = request.POST.get('entryDate')
             dueDate = request.POST.get('dueDate')
@@ -122,11 +144,14 @@ def task(request,userid=None):
                     'taskAddress': taskAddress,
                     'taskMobile': taskMobile,
                     'taskEmail': taskEmail,
+                    'taskStatus': 'Pending',
+                    
                 },
                 'system_info': {
                     'systemType': systemType,
                     'brand': brand,
                     'model': model,
+                    'serial_number': serial_number,
                     'issueDescription': issueDescription,
                     'entryDate': entryDate,
                     'dueDate': dueDate,
@@ -350,31 +375,87 @@ def rma(request, userid=None):
     return render(request, 'rma.html', {'userid': userid ,"rma_list": rma_list})
 
 def attendance_view(request, userid=None):
-    users = User.objects.all()
+    attendance_records = Attendance.objects.all()
+    user = User.objects.get(userid=userid) if userid else None
     userid = request.session.get('userid')
     if not userid:
         return redirect('login')  # or your login page
-    return render(request, 'attendance.html', {'userid': userid , 'users': users})
+
+    attendance_dict = {}
+    for record in attendance_records:
+        date_str = str(record.created_at.date())  # Convert date to string (YYYY-MM-DD)
+        # Assuming attendanceDetails is stored as JSON field
+        attendance_dict[date_str] = record.attendanceDetails
+    
+    print(f"attendance_dict: {attendance_dict}")  # Debugging line
+
+    return render(request, 'attendance.html', {'userid': userid , 'user': user,
+                 'attendance_list': attendance_dict})
 
 def attendance_submit(request, userid=None):
     userid = request.session.get('userid')
-    users = User.objects.all()
     if not userid:
         return redirect('login')  # or your login page
     
     if request.method == 'POST':
         try:
-
+   
             data = json.loads(request.body)
 
             attendance_date = list(data.keys())[0]
             attendance_items = data[attendance_date].get('AttendanceData', [])
 
-            print(f"Attendance Date: {attendance_date}, Items: {attendance_items}")  # Debugging line
-            messages.success(request, "Attendance submitted successfully.")
-            return JsonResponse({
-                "success": True,
-            })
+            current_time = timezone.localtime(timezone.now()).strftime("%H:%M:%S")
+
+            attendance_qs = Attendance.objects.filter(attendanceDetails__has_key=attendance_date)
+
+            if attendance_qs.exists():
+                attendance_record = attendance_qs.first()
+                existing_data = attendance_record.attendanceDetails.get(attendance_date, {})
+                existing_items = existing_data.get('AttendanceData', [])
+
+                # Existing user names
+                existing_names = {item['name'] for item in existing_items}
+
+                new_items = []
+
+                for item in attendance_items:
+                    if item['name'] in existing_names:
+                        messages.error(request, f"Attendance already submitted for {item['name']}.")
+                        return JsonResponse({
+                            "success": True,
+                        }, status=400)
+
+                    item['submitted_time'] = current_time
+                    new_items.append(item)
+
+                existing_items.extend(new_items)
+
+                attendance_record.attendanceDetails[attendance_date]['AttendanceData'] = existing_items
+                attendance_record.save()
+
+                messages.success(request, "Attendance submitted successfully.")
+                return JsonResponse({
+                    "success": True
+                })
+
+            else:
+                # First submission for the date
+                for item in attendance_items:
+                    item['submitted_time'] = current_time
+
+                attendance_data = {
+                    attendance_date: {
+                        'AttendanceData': attendance_items
+                    }
+                }
+
+                Attendance.objects.create(attendanceDetails=attendance_data)
+                messages.success(request, "Attendance submitted successfully.")
+                return JsonResponse({
+                    "success": True
+                })
+
         except Exception as e:
             print(f"Error processing attendance: {str(e)}")  # Debugging line
             messages.error(request, "Failed to submit attendance.")

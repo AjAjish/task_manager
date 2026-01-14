@@ -1,255 +1,729 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Dashboard - Task Manager{% endblock %}
+{% block title %}Advanced Dashboard - TaskFlow{% endblock %}
 
 {% block content %}
 <div class="dashboard-container">
+
     <!-- Dashboard Header -->
     <div class="dashboard-header">
-        <h1>Dashboard</h1>
-        <p class="dashboard-subtitle">Overview of your tasks and activities</p>
-    </div>
-
-    <!-- Stats Cards -->
-    <div class="stats-grid">
-        <!-- Total Tasks Card -->
-        <div class="stat-card stat-card-total">
-            <div class="stat-icon">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M9 11l3 3L22 4"></path>
-                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+        <div class="header-content">
+            <h1>Dashboard Overview</h1>
+            <p class="header-subtitle">Welcome back, <strong>{{ request.user.username|default:"User" }}</strong></p>
+        </div>
+        <div class="header-actions">
+            <div class="date-range-picker">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
                 </svg>
+                <select id="dateRange" class="date-select" onchange="filterDashboard(this.value)">
+                    <option value="today">Today</option>
+                    <option value="week" selected>This Week</option>
+                    <option value="month">This Month</option>
+                    <option value="year">This Year</option>
+                </select>
             </div>
-            <div class="stat-content">
-                <p class="stat-label">Total Tasks</p>
-                <h2 class="stat-value" id="totalTasks">0</h2>
-            </div>
-        </div>
-
-        <!-- Completed Tasks Card -->
-        <div class="stat-card stat-card-completed">
-            <div class="stat-icon">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M22 11. 08V12a10 10 0 1 1-5.93-9.14"></path>
-                    <polyline points="22 4 12 14. 01 9 11.01"></polyline>
+            <button class="btn-refresh" onclick="refreshDashboard()" title="Refresh Data">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <polyline points="1 20 1 14 7 14"></polyline>
+                    <path d="M3. 51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
                 </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Key Metrics Cards -->
+    <div class="metrics-grid">
+        <div class="metric-card metric-primary">
+            <div class="metric-header">
+                <div class="metric-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="8.5" cy="7" r="4"></circle>
+                        <line x1="20" y1="8" x2="20" y2="14"></line>
+                        <line x1="23" y1="11" x2="17" y2="11"></line>
+                    </svg>
+                </div>
+                <span class="metric-label">Total Users</span>
             </div>
-            <div class="stat-content">
-                <p class="stat-label">Completed</p>
-                <h2 class="stat-value" id="completedTasks">0</h2>
+            <div class="metric-value" data-count="{{ users|length }}">0</div>
+            <div class="metric-footer">
+                <span class="metric-change positive">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="18 15 12 9 6 15"></polyline>
+                    </svg>
+                    Active
+                </span>
+                <span class="metric-text">registered users</span>
             </div>
         </div>
 
-        <!-- Pending Tasks Card -->
-        <div class="stat-card stat-card-pending">
-            <div class="stat-icon">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
+        <div class="metric-card metric-success">
+            <div class="metric-header">
+                <div class="metric-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 11l3 3L22 4"></path>
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                    </svg>
+                </div>
+                <span class="metric-label">Total Tasks</span>
             </div>
-            <div class="stat-content">
-                <p class="stat-label">Pending</p>
-                <h2 class="stat-value" id="pendingTasks">0</h2>
+            <div class="metric-value" data-count="{{ tasks|length }}">0</div>
+            <div class="metric-footer">
+                <span class="metric-change positive">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="18 15 12 9 6 15"></polyline>
+                    </svg>
+                    8%
+                </span>
+                <span class="metric-text">vs last week</span>
+            </div>
+        </div>
+
+        <div class="metric-card metric-warning">
+            <div class="metric-header">
+                <div class="metric-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="8.5" cy="7" r="4"></circle>
+                        <polyline points="17 11 19 13 23 9"></polyline>
+                    </svg>
+                </div>
+                <span class="metric-label">Work Assigned</span>
+            </div>
+            <div class="metric-value" data-count="{{ works|length }}">0</div>
+            <div class="metric-footer">
+                <span class="metric-change neutral">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    0%
+                </span>
+                <span class="metric-text">no change</span>
+            </div>
+        </div>
+
+        <div class="metric-card metric-danger">
+            <div class="metric-header">
+                <div class="metric-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="16 12 12 8 8 12"></polyline>
+                        <line x1="12" y1="16" x2="12" y2="8"></line>
+                    </svg>
+                </div>
+                <span class="metric-label">RMA Requests</span>
+            </div>
+            <div class="metric-value" data-count="{{ rma_list|length }}">0</div>
+            <div class="metric-footer">
+                <span class="metric-change negative">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                    3%
+                </span>
+                <span class="metric-text">need attention</span>
             </div>
         </div>
     </div>
 
-    <!-- Progress Section -->
-    <div class="progress-section">
-        <div class="section-header">
-            <h2>Task Progress</h2>
-            <p class="completion-percentage" id="completionPercentage">0% Complete</p>
+    <!-- Charts Row 1: Financial Overview -->
+    <div class="charts-row">
+        <!-- Sales & Expenses Chart -->
+        <div class="chart-card chart-large">
+            <div class="chart-header">
+                <h3>Sales & Expenses Overview</h3>
+                <div class="chart-controls">
+                    <button class="chart-btn active" onclick="toggleChartType('salesChart', 'bar')">Bar</button>
+                    <button class="chart-btn" onclick="toggleChartType('salesChart', 'line')">Line</button>
+                </div>
+            </div>
+            <div class="chart-body">
+                <canvas id="salesExpensesChart"></canvas>
+            </div>
+            {% if sales_and_expenses %}
+            <div class="chart-summary">
+                <div class="summary-item summary-success">
+                    <span class="summary-label">Total Sales</span>
+                    <span class="summary-value">₹{{ sales_and_expenses.salesData.total_income|default:0 }}</span>
+                </div>
+                <div class="summary-item summary-danger">
+                    <span class="summary-label">Total Expenses</span>
+                    <span class="summary-value">₹{{ sales_and_expenses.salesData.total_outgoing|default:0 }}</span>
+                </div>
+                <div class="summary-item summary-primary">
+                    <span class="summary-label">Net Profit</span>
+                    <span class="summary-value">₹{{ sales_and_expenses.salesData.remaining_amount|default:0 }}</span>
+                </div>
+            </div>
+            {% endif %}
         </div>
 
-        <!-- Progress Bar -->
-        <div class="progress-bar-container">
-            <div class="progress-bar" id="progressBar">
-                <div class="progress-fill" id="progressFill"></div>
+        <!-- Work Distribution -->
+        <div class="chart-card chart-medium">
+            <div class="chart-header">
+                <h3>Work Distribution</h3>
             </div>
-        </div>
-
-        <!-- Progress Stats -->
-        <div class="progress-stats">
-            <div class="progress-stat">
-                <span class="progress-stat-label">Completed</span>
-                <span class="progress-stat-value" id="progressCompleted">0</span>
+            <div class="chart-body">
+                <canvas id="workDistributionChart"></canvas>
             </div>
-            <div class="progress-stat">
-                <span class="progress-stat-label">In Progress</span>
-                <span class="progress-stat-value" id="progressInProgress">0</span>
-            </div>
-            <div class="progress-stat">
-                <span class="progress-stat-label">Pending</span>
-                <span class="progress-stat-value" id="progressPending">0</span>
+            <div class="chart-legend">
+                <div class="legend-item">
+                    <span class="legend-dot" style="background:  #007AFF;"></span>
+                    <span>Assigned ({{ works|length }})</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot" style="background: #34C759;"></span>
+                    <span>Completed</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot" style="background:  #FF9500;"></span>
+                    <span>Pending</span>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Chart Section -->
-    <div class="chart-section">
-        <div class="section-header">
-            <h2>Weekly Overview</h2>
+    <!-- Charts Row 2: Attendance & RMA -->
+    <div class="charts-row">
+        <!-- Attendance Overview -->
+        <div class="chart-card chart-medium">
+            <div class="chart-header">
+                <h3>Attendance Overview</h3>
+                <span class="chart-badge">{{ attendance_list|length }} Records</span>
+            </div>
+            <div class="chart-body">
+                <canvas id="attendanceChart"></canvas>
+            </div>
         </div>
 
-        <div class="chart-container">
-            <div class="chart-bars" id="chartBars">
-                <!-- Bars will be generated by JavaScript -->
+        <!-- RMA Status -->
+        <div class="chart-card chart-medium">
+            <div class="chart-header">
+                <h3>RMA Status</h3>
             </div>
-            <div class="chart-labels">
-                <span>Mon</span>
-                <span>Tue</span>
-                <span>Wed</span>
-                <span>Thu</span>
-                <span>Fri</span>
-                <span>Sat</span>
-                <span>Sun</span>
+            <div class="chart-body">
+                <canvas id="rmaStatusChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Task Statistics -->
+        <div class="chart-card chart-small">
+            <div class="chart-header">
+                <h3>Task Statistics</h3>
+            </div>
+            <div class="stats-list">
+                <div class="stat-item-small">
+                    <span class="stat-label-small">Total Tasks</span>
+                    <span class="stat-value-small">{{ tasks|length }}</span>
+                </div>
+                <div class="stat-item-small">
+                    <span class="stat-label-small">Active Users</span>
+                    <span class="stat-value-small">{{ users|length }}</span>
+                </div>
+                <div class="stat-item-small">
+                    <span class="stat-label-small">Work Items</span>
+                    <span class="stat-value-small">{{ works|length }}</span>
+                </div>
+                <div class="stat-item-small">
+                    <span class="stat-label-small">RMA Pending</span>
+                    <span class="stat-value-small">{{ rma_list|length }}</span>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Recent Activities -->
-    <div class="activities-section">
-        <div class="section-header">
-            <h2>Recent Activities</h2>
+    <!-- Data Tables Row -->
+    <div class="tables-row">
+        <!-- Recent RMA Requests -->
+        <div class="table-card">
+            <div class="table-header">
+                <h3>Recent RMA Requests</h3>
+                <a href="{% if userid %}{% url 'rma' userid=userid %}{% else %}#{% endif %}" class="view-all-link">
+                    View All
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </a>
+            </div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Product</th>
+                            <th>Serial Number</th>
+                            <th>Quantity</th>
+                            <th>Problem</th>
+                            <th>Address</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if rma_list %}
+                            {% for rma in rma_list|slice:":5" %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    <div class="product-name">
+                                        <span class="product-icon">📦</span>
+                                        {{ rma.rmaDetails.product_name|default:"N/A" }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="serial-badge">{{ rma.rmaDetails.serial_number|default:"N/A" }}</span>
+                                </td>
+                                <td>{{ rma.rmaDetails.quantity|default:0 }}</td>
+                                <td>
+                                    <div class="problem-text" title="{{ rma.rmaDetails.problem_description }}">
+                                        {{ rma.rmaDetails.problem_description|truncatewords:5|default:"No description" }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="address-text">
+                                        {{ rma.rmaDetails.to_address|truncatewords:4|default:"N/A" }}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="6" class="empty-row">No RMA requests found</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <div class="activity-list" id="activityList">
-            <!-- Activities will be generated by JavaScript -->
+        <!-- Sales & Expenses Breakdown -->
+        <div class="table-card">
+            <div class="table-header">
+                <h3>Sales & Expenses Breakdown</h3>
+                <a href="{% if userid %}{% url 'sales_and_expenses' userid=userid %}{% else %}#{% endif %}" class="view-all-link">
+                    View All
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </a>
+            </div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Item</th>
+                            <th>S.No</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if sales_and_expenses.salesData.income %}
+                            {% for item in sales_and_expenses.salesData.income|slice:":3" %}
+                            <tr>
+                                <td><span class="type-badge type-income">Income</span></td>
+                                <td>
+                                    <div class="item-name">
+                                        <span class="item-icon">💰</span>
+                                        {{ item.product|default:"N/A" }}
+                                    </div>
+                                </td>
+                                <td>{{ item.s_no }}</td>
+                                <td class="amount-positive">₹{{ item.amount|default:0 }}</td>
+                            </tr>
+                            {% endfor %}
+                        {% endif %}
+                        
+                        {% if sales_and_expenses.salesData.outgoing %}
+                            {% for item in sales_and_expenses.salesData.outgoing|slice:": 3" %}
+                            <tr>
+                                <td><span class="type-badge type-expense">Expense</span></td>
+                                <td>
+                                    <div class="item-name">
+                                        <span class="item-icon">💸</span>
+                                        {{ item.name|default:"N/A" }}
+                                    </div>
+                                </td>
+                                <td>{{ item.s_no }}</td>
+                                <td class="amount-negative">₹{{ item.amount|default:0 }}</td>
+                            </tr>
+                            {% endfor %}
+                        {% endif %}
+                        
+                        {% if not sales_and_expenses.salesData.income and not sales_and_expenses.salesData.outgoing %}
+                            <tr>
+                                <td colspan="4" class="empty-row">No sales or expenses data</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
+
+    <!-- Recent Work Assignments -->
+    <div class="work-assignments-section">
+        <div class="table-card">
+            <div class="table-header">
+                <h3>Recent Work Assignments</h3>
+                <a href="{% if userid %}{% url 'work_with_id' userid=userid %}{% else %}#{% endif %}" class="view-all-link">
+                    View All
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </a>
+            </div>
+            <div class="work-grid">
+                {% if works %}
+                    {% for work in works|slice:":6" %}
+                    <div class="work-card">
+                        <div class="work-header">
+                            <div class="work-avatar">{{ work.assignedUser.username|slice:":1"|upper|default:"U" }}</div>
+                            <div class="work-info">
+                                <h4>{{ work.assignedUser.username|default:"Unassigned" }}</h4>
+                                <p>{{ work.assignedTask.name|default:"No task" }}</p>
+                            </div>
+                        </div>
+                        <div class="work-details">
+                            <div class="work-detail-item">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                </svg>
+                                <span>Assigned</span>
+                            </div>
+                            <div class="work-detail-item">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                                <span>In Progress</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state-small">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="8.5" cy="7" r="4"></circle>
+                            <polyline points="17 11 19 13 23 9"></polyline>
+                        </svg>
+                        <p>No work assignments found</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Tasks -->
+    <div class="tasks-section">
+        <div class="table-card">
+            <div class="table-header">
+                <h3>Recent Tasks</h3>
+                <a href="{% if userid %}{% url 'task_with_id' userid=userid %}{% else %}#{% endif %}" class="view-all-link">
+                    View All
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </a>
+            </div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Task Name</th>
+                            <th>Status</th>
+                            <th>Created By</th>
+                            <th>Created At</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if tasks %}
+                            {% for task in tasks%}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    <div class="task-name">
+                                        <span class="task-icon">📋</span>
+                                        {{ task.name|default:"Unnamed Task" }}
+                                    </div>
+                                </td>
+                                <td><span class="status-badge status-todo">Active</span></td>
+                                <td>{{ task.createdBy.username|default:"Unknown" }}</td>
+                                <td>{{ task.createdAt|date:"M d, Y"|default:"N/A" }}</td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="5" class="empty-row">No tasks found</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
 </div>
-{% endblock %}
 
-{% block extra_js %}
+<!-- Inline JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-    // Dashboard data (simulated - in real app, this would come from backend)
-    const dashboardData = {
-        totalTasks: 45,
-        completedTasks:  32,
-        pendingTasks:  13,
-        weeklyData: [8, 12, 15, 10, 14, 9, 11],
-        activities: [
-            { title: 'Completed "Design Review"', time: '2 hours ago', type: 'completed' },
-            { title: 'Added new task "Backend API"', time: '5 hours ago', type: 'added' },
-            { title: 'Updated "Database Schema"', time: '1 day ago', type: 'updated' },
-            { title: 'Completed "User Testing"', time: '2 days ago', type: 'completed' },
-            { title: 'Added new task "Documentation"', time: '3 days ago', type: 'added' }
-        ]
-    };
+// ============================================
+// DATA FROM DJANGO
+// ============================================
+const dashboardData = {
+    users: {{ users|length }},
+    tasks: {{ tasks|length }},
+    works:  {{ works|length }},
+    rmaRequests: {{ rma_list|length }},
+    {% if sales_and_expenses %}
+    totalIncome: {{ sales_and_expenses.salesData.total_income|default:0 }},
+    totalExpenses: {{ sales_and_expenses.salesData.total_outgoing|default:0 }},
+    netProfit: {{ sales_and_expenses.salesData.remaining_amount|default:0 }},
+    {% else %}
+    totalIncome: 0,
+    totalExpenses:  0,
+    netProfit: 0,
+    {% endif %}
+    attendance: {{ attendance_list|length }}
+};
 
-    // Update stats
-    function updateStats() {
-        document.getElementById('totalTasks').textContent = dashboardData.totalTasks;
-        document.getElementById('completedTasks').textContent = dashboardData.completedTasks;
-        document.getElementById('pendingTasks').textContent = dashboardData.pendingTasks;
-        
-        // Animate numbers
-        animateNumber('totalTasks', dashboardData. totalTasks);
-        animateNumber('completedTasks', dashboardData.completedTasks);
-        animateNumber('pendingTasks', dashboardData.pendingTasks);
-    }
+// ============================================
+// COUNTER ANIMATION
+// ============================================
+function animateCounter(element) {
+    const target = parseInt(element.dataset.count);
+    const duration = 2000;
+    const increment = target / (duration / 16);
+    let current = 0;
 
-    // Animate number counting
-    function animateNumber(elementId, target) {
-        const element = document.getElementById(elementId);
-        let current = 0;
-        const increment = target / 30;
-        const timer = setInterval(() => {
-            current += increment;
-            if (current >= target) {
-                element.textContent = target;
-                clearInterval(timer);
-            } else {
-                element.textContent = Math.floor(current);
+    const timer = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+            element.textContent = target;
+            clearInterval(timer);
+        } else {
+            element.textContent = Math.floor(current);
+        }
+    }, 16);
+}
+
+// ============================================
+// CHART CONFIGURATIONS
+// ============================================
+const chartColors = {
+    primary: '#007AFF',
+    success: '#34C759',
+    warning: '#FF9500',
+    danger: '#FF3B30',
+    secondary: '#8E8E93'
+};
+
+// Sales & Expenses Chart
+const salesExpensesCtx = document.getElementById('salesExpensesChart');
+let salesExpensesChart = null;
+if (salesExpensesCtx) {
+    salesExpensesChart = new Chart(salesExpensesCtx, {
+        type:  'bar',
+        data:  {
+            labels: ['Income', 'Expenses', 'Profit'],
+            datasets: [{
+                label: 'Amount (₹)',
+                data: [dashboardData.totalIncome, dashboardData.totalExpenses, dashboardData.netProfit],
+                backgroundColor: [
+                    chartColors.success,
+                    chartColors.danger,
+                    chartColors.primary
+                ],
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive:  true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display:  false
+                }
+            },
+            scales: {
+                y:  {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display:  false
+                    }
+                }
             }
-        }, 30);
-    }
-
-    // Update progress bar
-    function updateProgress() {
-        const percentage = Math.round((dashboardData.completedTasks / dashboardData.totalTasks) * 100);
-        const progressFill = document.getElementById('progressFill');
-        const completionPercentage = document.getElementById('completionPercentage');
-        
-        setTimeout(() => {
-            progressFill.style.width = percentage + '%';
-        }, 100);
-        
-        completionPercentage.textContent = percentage + '% Complete';
-        
-        document.getElementById('progressCompleted').textContent = dashboardData.completedTasks;
-        document.getElementById('progressInProgress').textContent = Math.floor(dashboardData.pendingTasks / 2);
-        document.getElementById('progressPending').textContent = dashboardData.pendingTasks;
-    }
-
-    // Generate chart
-    function generateChart() {
-        const chartBars = document.getElementById('chartBars');
-        const maxValue = Math.max(...dashboardData.weeklyData);
-        
-        dashboardData.weeklyData.forEach((value, index) => {
-            const barWrapper = document.createElement('div');
-            barWrapper.className = 'chart-bar-wrapper';
-            
-            const bar = document.createElement('div');
-            bar.className = 'chart-bar';
-            const height = (value / maxValue) * 100;
-            
-            setTimeout(() => {
-                bar.style.height = height + '%';
-            }, 100 + (index * 50));
-            
-            const label = document.createElement('span');
-            label.className = 'chart-value';
-            label.textContent = value;
-            
-            barWrapper.appendChild(label);
-            barWrapper.appendChild(bar);
-            chartBars. appendChild(barWrapper);
-        });
-    }
-
-    // Generate activities
-    function generateActivities() {
-        const activityList = document. getElementById('activityList');
-        
-        dashboardData.activities.forEach((activity, index) => {
-            const activityItem = document. createElement('div');
-            activityItem.className = 'activity-item';
-            activityItem. style.animationDelay = (index * 0.1) + 's';
-            
-            const activityIcon = document.createElement('div');
-            activityIcon.className = `activity-icon activity-icon-${activity.type}`;
-            
-            const activityContent = document.createElement('div');
-            activityContent.className = 'activity-content';
-            
-            const activityTitle = document. createElement('p');
-            activityTitle.className = 'activity-title';
-            activityTitle.textContent = activity.title;
-            
-            const activityTime = document.createElement('span');
-            activityTime.className = 'activity-time';
-            activityTime.textContent = activity.time;
-            
-            activityContent.appendChild(activityTitle);
-            activityContent.appendChild(activityTime);
-            
-            activityItem.appendChild(activityIcon);
-            activityItem.appendChild(activityContent);
-            
-            activityList.appendChild(activityItem);
-        });
-    }
-
-    // Initialize dashboard
-    document.addEventListener('DOMContentLoaded', function() {
-        updateStats();
-        updateProgress();
-        generateChart();
-        generateActivities();
+        }
     });
+}
+
+// Work Distribution Chart
+const workDistributionCtx = document.getElementById('workDistributionChart');
+if (workDistributionCtx) {
+    new Chart(workDistributionCtx, {
+        type: 'doughnut',
+        data:  {
+            labels: ['Assigned', 'Completed', 'Pending'],
+            datasets: [{
+                data: [dashboardData. works, Math.floor(dashboardData.works * 0.6), Math.floor(dashboardData.works * 0.4)],
+                backgroundColor: [
+                    chartColors.primary,
+                    chartColors.success,
+                    chartColors.warning
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display:  false
+                }
+            },
+            cutout: '70%'
+        }
+    });
+}
+
+// Attendance Chart
+const attendanceCtx = document.getElementById('attendanceChart');
+if (attendanceCtx) {
+    new Chart(attendanceCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+            datasets: [{
+                label: 'Present',
+                data: [45, 48, 42, 47, 44],
+                backgroundColor: chartColors.success
+            }, {
+                label: 'Absent',
+                data:  [5, 2, 8, 3, 6],
+                backgroundColor: chartColors.danger
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero:  true,
+                    stacked: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                x: {
+                    stacked: true,
+                    grid: {
+                        display:  false
+                    }
+                }
+            }
+        }
+    });
+}
+
+// RMA Status Chart
+const rmaStatusCtx = document.getElementById('rmaStatusChart');
+if (rmaStatusCtx) {
+    new Chart(rmaStatusCtx, {
+        type: 'pie',
+        data: {
+            labels: ['Pending', 'In Process', 'Resolved'],
+            datasets: [{
+                data: [dashboardData.rmaRequests, Math.floor(dashboardData.rmaRequests * 0.3), Math.floor(dashboardData.rmaRequests * 0.2)],
+                backgroundColor: [
+                    chartColors.warning,
+                    chartColors.primary,
+                    chartColors.success
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+// ============================================
+// DASHBOARD FUNCTIONS
+// ============================================
+function refreshDashboard() {
+    const btn = document.querySelector('.btn-refresh svg');
+    btn.style.animation = 'spin 1s linear infinite';
+    
+    setTimeout(() => {
+        btn.style.animation = '';
+        window.location.reload();
+    }, 1000);
+}
+
+function filterDashboard(period) {
+    console.log('Filtering dashboard by:', period);
+    // Add your filter logic here
+}
+
+function toggleChartType(chartId, type) {
+    // Toggle active button
+    event.target.parentElement.querySelectorAll('.chart-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // Update chart type
+    if (salesExpensesChart) {
+        salesExpensesChart.config.type = type;
+        salesExpensesChart.update();
+    }
+}
+
+// ============================================
+// INITIALIZATION
+// ============================================
+document. addEventListener('DOMContentLoaded', () => {
+    // Animate counters
+    document.querySelectorAll('.metric-value[data-count]').forEach(el => {
+        animateCounter(el);
+    });
+});
+
+// Add spin animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+`;
+document.head.appendChild(style);
 </script>
+
 {% endblock %}
