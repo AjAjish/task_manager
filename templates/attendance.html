@@ -25,6 +25,10 @@
                 <span class="badge-label">Absent</span>
                 <span class="badge-value" id="absentCount">0</span>
             </div>
+            <div class="stat-badge stat-leave">
+                <span class="badge-label">On Leave</span>
+                <span class="badge-value" id="leaveCount">0</span>
+            </div>
         </div>
     </div>
 
@@ -43,6 +47,17 @@
                 <polyline points="12 6 12 12 16 14"></polyline>
             </svg>
             Attendance History
+        </button>
+        <button class="btn-apply-leave" onclick="openLeaveModal()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+                <path d="M8 14h. 01"></path>
+                <path d="M12 14h.01"></path>
+            </svg>
+            Apply Leave
         </button>
     </div>
 
@@ -170,6 +185,7 @@
                         <option value="all">All Status</option>
                         <option value="present">Present</option>
                         <option value="absent">Absent</option>
+                        <option value="leave">Leave</option>
                     </select>
                 </div>
                 <button class="btn-filter-reset" onclick="resetFilters()">
@@ -261,6 +277,14 @@
                                                         </svg>
                                                         Present
                                                     </span>
+                                                    {% elif record.status == 'leave' %}
+                                                    <span class="table-status-badge status-leave">
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                                                        </svg>
+                                                        Leave
+                                                    </span>
                                                     {% else %}
                                                     <span class="table-status-badge status-absent">
                                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -289,16 +313,20 @@
                                 <!-- Summary -->
                                 <div class="table-summary">
                                     <div class="summary-item">
-                                        <span class="summary-label">Total: </span>
+                                        <span class="summary-label">Total:  </span>
                                         <span class="summary-value">{{ data.AttendanceData|length }}</span>
                                     </div>
                                     <div class="summary-item summary-present">
-                                        <span class="summary-label">Present:</span>
+                                        <span class="summary-label">Present: </span>
                                         <span class="summary-value" data-present-count="{{ forloop.counter }}">0</span>
                                     </div>
                                     <div class="summary-item summary-absent">
-                                        <span class="summary-label">Absent:</span>
+                                        <span class="summary-label">Absent: </span>
                                         <span class="summary-value" data-absent-count="{{ forloop.counter }}">0</span>
+                                    </div>
+                                    <div class="summary-item summary-leave">
+                                        <span class="summary-label">Leave: </span>
+                                        <span class="summary-value" data-leave-count="{{ forloop.counter }}">0</span>
                                     </div>
                                 </div>
                                 {% endif %}
@@ -322,11 +350,98 @@
 
 </div>
 
+<!-- Leave Application Modal -->
+<div class="modal-overlay" id="leaveModal">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2>Apply for Leave</h2>
+            <button class="modal-close" onclick="closeLeaveModal()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <form id="leaveForm" onsubmit="submitLeave(event)">
+            <div class="modal-body">
+                <!-- From Date -->
+                <div class="form-group-modal">
+                    <label for="fromDate" class="form-label-modal">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        From Date
+                    </label>
+                    <input type="date" id="fromDate" class="form-input-modal" required>
+                </div>
+
+                <!-- To Date -->
+                <div class="form-group-modal">
+                    <label for="toDate" class="form-label-modal">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        To Date
+                    </label>
+                    <input type="date" id="toDate" class="form-input-modal" required>
+                </div>
+
+                <!-- Half Day Option -->
+                <div class="form-group-modal">
+                    <label class="form-label-modal">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        Half Day
+                    </label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="halfDay" value="first" onchange="handleHalfDayChange(this)">
+                            <span class="checkbox-text">First Half</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="halfDay" value="second" onchange="handleHalfDayChange(this)">
+                            <span class="checkbox-text">Second Half</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Leave Reason -->
+                <div class="form-group-modal">
+                    <label for="leaveReason" class="form-label-modal">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        Leave Reason
+                    </label>
+                    <textarea id="leaveReason" class="form-textarea-modal" rows="4" placeholder="Enter your reason for leave..." required></textarea>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-modal btn-cancel" onclick="closeLeaveModal()">Cancel</button>
+                <button type="submit" class="btn-modal btn-submit-modal">Submit Leave Application</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <form style="display: none;">{% csrf_token %}</form>
 
 <script>
 /* ================================
-   ATTENDANCE MANAGEMENT (TABLE VIEW)
+   ATTENDANCE MANAGEMENT (WITH LEAVE)
 ================================ */
 
 let attendanceData = {};
@@ -336,33 +451,25 @@ let currentTab = 'mark';
 document.addEventListener('DOMContentLoaded', () => {
     updateCounts();
     calculateTableSummary();
+    
+    // Set min date for leave application (today)
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('fromDate').setAttribute('min', today);
+    document.getElementById('toDate').setAttribute('min', today);
 });
 
 /* Tab Switching */
 function switchTab(tab) {
     currentTab = tab;
-    
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     event.target.closest('.tab-btn').classList.add('active');
-    
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-    });
-    
-    if (tab === 'mark') {
-        document.getElementById('markTab').classList.add('active');
-    } else {
-        document.getElementById('historyTab').classList.add('active');
-    }
+    document.querySelectorAll('.tab-content').forEach(content => content. classList.remove('active'));
+    document.getElementById(tab === 'mark' ? 'markTab' : 'historyTab').classList.add('active');
 }
 
 /* Click handler */
 function handleAttendanceClick(btn, status) {
-    const userId = btn.dataset.userId;
-    const userName = btn.dataset. userName;
-    markAttendance(userId, userName, status);
+    markAttendance(btn.dataset.userId, btn.dataset.userName, status);
 }
 
 /* Core logic */
@@ -370,40 +477,33 @@ function markAttendance(userId, userName, status) {
     const now = new Date();
     const submittedTime = now.toTimeString().split(' ')[0];
     
-    attendanceData[userId] = {
-        name: userName,
-        status: status,
-        submitted_time: submittedTime
-    };
-
+    attendanceData[userId] = { name: userName, status: status, submitted_time: submittedTime };
+    
     const statusEl = document.getElementById(`status-${userId}`);
     const item = document.querySelector(`.attendance-item[data-user-id="${userId}"]`);
-
+    
     if (! item || !statusEl) return;
-
+    
     item.classList.remove('marked-present', 'marked-absent');
-
+    
     if (status === 'present') {
-        statusEl.innerHTML = `<span class="status-label status-present">✓ Present (${submittedTime})</span>`;
+        statusEl. innerHTML = `<span class="status-label status-present">✓ Present (${submittedTime})</span>`;
         item.classList.add('marked-present');
     } else {
         statusEl.innerHTML = `<span class="status-label status-absent">✗ Absent (${submittedTime})</span>`;
         item.classList.add('marked-absent');
     }
-
+    
     updateCounts();
 }
 
 /* Counters */
 function updateCounts() {
-    let present = 0;
-    let absent = 0;
-
+    let present = 0, absent = 0;
     Object.values(attendanceData).forEach(r => {
         if (r. status === 'present') present++;
         if (r.status === 'absent') absent++;
     });
-
     document.getElementById('presentCount').textContent = present;
     document.getElementById('absentCount').textContent = absent;
     document.getElementById('markedCount').textContent = present + absent;
@@ -413,60 +513,48 @@ function updateCounts() {
 function calculateTableSummary() {
     document.querySelectorAll('.history-date-block').forEach((block) => {
         const rows = block.querySelectorAll('tbody tr');
-        let presentCount = 0;
-        let absentCount = 0;
+        let presentCount = 0, absentCount = 0, leaveCount = 0;
         
         rows.forEach(row => {
-            const status = row.dataset.status;
-            if (status === 'present') presentCount++;
-            if (status === 'absent') absentCount++;
+            if (row.dataset.status === 'present') presentCount++;
+            if (row. dataset.status === 'absent') absentCount++;
+            if (row.dataset.status === 'leave') leaveCount++;
         });
         
         const presentEl = block.querySelector('[data-present-count]');
-        const absentEl = block. querySelector('[data-absent-count]');
+        const absentEl = block.querySelector('[data-absent-count]');
+        const leaveEl = block.querySelector('[data-leave-count]');
         
         if (presentEl) presentEl.textContent = presentCount;
         if (absentEl) absentEl.textContent = absentCount;
+        if (leaveEl) leaveEl.textContent = leaveCount;
     });
 }
 
 /* Search filter */
 function filterUsers() {
     const searchTerm = document.getElementById('searchUser').value.toLowerCase();
-
     document.querySelectorAll('.attendance-item').forEach(item => {
-        const userName = item.getAttribute('data-user-name').toLowerCase();
-        item.style.display = userName.includes(searchTerm) ? '' : 'none';
+        item.style.display = item.getAttribute('data-user-name').toLowerCase().includes(searchTerm) ? '' : 'none';
     });
 }
 
-/* Submit */
+/* Submit Attendance */
 function submitAttendance() {
     if (Object.keys(attendanceData).length === 0) {
         alert('Please mark attendance');
         return;
     }
-
+    
     const today = new Date().toISOString().split('T')[0];
     const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-
-    const payload = {
-        [today]: {
-            AttendanceData: Object.values(attendanceData)
-        }
-    };
-
-    // Get userid from the URL path
+    const payload = { [today]: { AttendanceData: Object.values(attendanceData) } };
     const userid = window.location.pathname.split('/')[2];
-    const url = `/attendance_submit/${userid}/`;
-
-    fetch(url, {
+    
+    fetch(`/attendance_submit/${userid}/`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrftoken
-        },
-        body: JSON.stringify(payload)
+        headers:  { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+        body: JSON. stringify(payload)
     })
     .then(res => res.json())
     .then(data => {
@@ -483,10 +571,10 @@ function submitAttendance() {
     });
 }
 
-/* Reset */
+/* Reset Attendance */
 function resetAttendance() {
     attendanceData = {};
-    document. querySelectorAll('.attendance-status').forEach(el => {
+    document.querySelectorAll('.attendance-status').forEach(el => {
         el.innerHTML = '<span class="status-label">Not Marked</span>';
     });
     document.querySelectorAll('.attendance-item').forEach(el => {
@@ -496,55 +584,116 @@ function resetAttendance() {
     updateCounts();
 }
 
+/* ================================
+   LEAVE MANAGEMENT
+================================ */
+
+/* Open Leave Modal */
+function openLeaveModal() {
+    document.getElementById('leaveModal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+/* Close Leave Modal */
+function closeLeaveModal() {
+    document.getElementById('leaveModal').classList.remove('active');
+    document.body.style.overflow = '';
+    document.getElementById('leaveForm').reset();
+}
+
+/* Handle Half Day Checkbox */
+function handleHalfDayChange(checkbox) {
+    const checkboxes = document.querySelectorAll('input[name="halfDay"]');
+    checkboxes.forEach(cb => {
+        if (cb !== checkbox) cb.checked = false;
+    });
+}
+
+/* Submit Leave Application */
+function submitLeave(event) {
+    event.preventDefault();
+    
+    const fromDate = document.getElementById('fromDate').value;
+    const toDate = document.getElementById('toDate').value;
+    const halfDayCheckboxes = document.querySelectorAll('input[name="halfDay"]:checked');
+    const halfDay = halfDayCheckboxes. length > 0 ? halfDayCheckboxes[0].value : 'none';
+    const leaveReason = document.getElementById('leaveReason').value;
+    
+    // Validate dates
+    if (new Date(toDate) < new Date(fromDate)) {
+        alert('To Date cannot be before From Date');
+        return;
+    }
+    
+    const leaveData = {
+        from_date: fromDate,
+        to_date: toDate,
+        half_day: halfDay,
+        reason: leaveReason
+    };
+    
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const userid = window.location.pathname.split('/')[2];
+    
+    fetch(`/leave/apply/${userid}/`, {
+        method: 'POST',
+        headers:  {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+        },
+        body: JSON.stringify(leaveData)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert('Leave application submitted successfully!');
+            closeLeaveModal();
+        } else {
+            alert(data.message || 'Failed to submit leave application');
+        }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        alert('Server error');
+    });
+}
+
 /* History Functions */
 function filterHistory() {
     const filterDate = document.getElementById('filterDate').value;
     const filterStatus = document.getElementById('filterStatus').value;
     
     document.querySelectorAll('.history-date-block').forEach(block => {
-        const blockDate = block.dataset.date;
         let showBlock = true;
         
-        if (filterDate && blockDate !== filterDate) {
-            showBlock = false;
-        }
+        if (filterDate && block.dataset. date !== filterDate) showBlock = false;
         
         if (filterStatus !== 'all') {
-            const rows = block.querySelectorAll('tbody tr');
             let hasStatus = false;
-            rows.forEach(row => {
-                if (row.dataset.status === filterStatus) {
-                    hasStatus = true;
-                }
+            block.querySelectorAll('tbody tr').forEach(row => {
+                if (row.dataset. status === filterStatus) hasStatus = true;
             });
-            if (!hasStatus) {
-                showBlock = false;
-            }
+            if (!hasStatus) showBlock = false;
         }
         
-        block. style.display = showBlock ? '' : 'none';
+        block.style.display = showBlock ?  '' : 'none';
     });
     
-    const visibleCount = document.querySelectorAll('. history-date-block:not([style*="display: none"])').length;
-    document.getElementById('totalRecords').textContent = visibleCount;
+    document.getElementById('totalRecords').textContent = 
+        document.querySelectorAll('.history-date-block: not([style*="display: none"])').length;
 }
 
 function resetFilters() {
     document.getElementById('filterDate').value = '';
     document.getElementById('filterStatus').value = 'all';
-    
-    document.querySelectorAll('. history-date-block').forEach(block => {
-        block.style.display = '';
-    });
-    
-    document.getElementById('totalRecords').textContent = 
-        document.querySelectorAll('. history-date-block').length;
+    document.querySelectorAll('.history-date-block').forEach(block => block.style.display = '');
+    document.getElementById('totalRecords').textContent = document.querySelectorAll('.history-date-block').length;
 }
 
 function downloadRecord(date, data) {
-    if (!data || !data.AttendanceData) return;
+    if (! data || !data.AttendanceData) return;
     
-    let csvContent = "S.No,Name,Status,Submitted Time\n";
+    let csvContent = "S. No,Name,Status,Submitted Time\n";
     data.AttendanceData.forEach((record, index) => {
         csvContent += `${index + 1},${record.name},${record.status},${record.submitted_time}\n`;
     });
@@ -561,18 +710,13 @@ function downloadRecord(date, data) {
 }
 
 function deleteRecord(date) {
-    if (!confirm(`Are you sure you want to delete attendance record for ${date}?`)) {
-        return;
-    }
+    if (!confirm(`Are you sure you want to delete attendance record for ${date}?`)) return;
     
     const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
     
     fetch(`/attendance/delete/${date}/`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrftoken
-        }
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken':  csrftoken }
     })
     .then(res => res.json())
     .then(data => {
@@ -588,6 +732,13 @@ function deleteRecord(date) {
         alert('Server error');
     });
 }
+
+/* Close modal on outside click */
+document.addEventListener('click', (e) => {
+    if (e.target. classList.contains('modal-overlay')) {
+        closeLeaveModal();
+    }
+});
 </script>
 
 {% endblock %}

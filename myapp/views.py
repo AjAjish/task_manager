@@ -427,6 +427,7 @@ def attendance_submit(request, userid=None):
                         }, status=400)
 
                     item['submitted_time'] = current_time
+                    item.setdefault('leave',None)
                     new_items.append(item)
 
                 existing_items.extend(new_items)
@@ -443,10 +444,11 @@ def attendance_submit(request, userid=None):
                 # First submission for the date
                 for item in attendance_items:
                     item['submitted_time'] = current_time
+                    item.setdefault('leave',None)
 
                 attendance_data = {
                     attendance_date: {
-                        'AttendanceData': attendance_items
+                        'AttendanceData': attendance_items,
                     }
                 }
 
@@ -466,3 +468,125 @@ def logout(request):
     request.session.flush()
     messages.success(request, 'Logged out successfully.')
     return redirect('home')
+
+def apply_leave(request, userid=None):
+    if request.method != 'POST':
+        return JsonResponse({
+            'success': False,
+            'message': 'Invalid request method'
+        }, status=405)
+
+    try:
+        try:
+            user = User.objects.get(userid=userid)
+        except User.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': 'User not found'
+            }, status=404)
+
+        data = json.loads(request.body)
+
+        from_date = data.get('from_date')
+        to_date = data.get('to_date')
+        half_day = data.get('half_day', 'none')
+        reason = data.get('reason')
+
+        if not all([from_date, to_date, reason]):
+            messages.error(request, "All fields are required.")
+            return JsonResponse({
+                'success': False
+            }, status=400)
+
+        from_date_obj = datetime.strptime(from_date, '%Y-%m-%d').date()
+        to_date_obj = datetime.strptime(to_date, '%Y-%m-%d').date()
+
+        if to_date_obj < from_date_obj:
+            messages.error(request, "To date cannot be before from date.")
+            return JsonResponse({
+                'success': False
+            }, status=400)
+
+        if from_date_obj < timezone.now().date():
+            messages.error(request, "Cannot apply leave for past dates.")
+            return JsonResponse({
+                'success': False
+            }, status=400)
+
+        leave_data = {
+            'user': user.username,
+            'from_date': from_date,
+            'to_date': to_date,
+            'half_day': half_day,
+            'reason': reason,
+            'applied_at': timezone.localtime(timezone.now()).strftime('%H:%M:%S')
+        }
+
+        attendance_date = from_date
+        current_time = timezone.localtime(timezone.now()).strftime('%H:%M:%S')
+
+        attendance_qs = Attendance.objects.filter(
+            attendanceDetails__has_key=attendance_date
+        )
+
+        if attendance_qs.exists():
+            attendance = attendance_qs.first()
+            date_data = attendance.attendanceDetails.get(attendance_date, {})
+            attendance_items = date_data.get('AttendanceData', [])
+
+            user_found = False
+
+            for item in attendance_items:
+                if item['name'] == user.username:
+                    item['status'] = 'leave'
+                    item['leave'] = leave_data
+                    user_found = True
+                    break
+
+            if not user_found:
+                attendance_items.append({
+                    'name': user.username,
+                    'status': 'leave',
+                    'submitted_time': current_time,
+                    'leave': leave_data
+                })
+
+            # attendance.attendanceDetails[attendance_date] = {
+            #     'AttendanceData': attendance_items,
+            #     'leave': leave_data
+            # }
+
+            # attendance.save()
+            print(attendance.attendanceDetails)
+
+        else:
+            Attendance.objects.create(
+                attendanceDetails={
+                    attendance_date: {
+                        'AttendanceData': [{
+                            'name': user.username,
+                            'status': 'leave',
+                            'submitted_time': current_time,
+                            'leave': leave_data
+                        }],
+                        'leave': leave_data
+                    }
+                }
+            )
+
+        messages.success(request, "Leave applied successfully.")
+        return JsonResponse({
+            'success': True
+        })
+
+    except json.JSONDecodeError:
+        messages.error(request, "Invalid JSON payload.")
+        return JsonResponse({
+            'success': False
+        }, status=400)
+
+    except Exception as e:
+        messages.error(request, f"Failed to apply leave by {str(e)}.")
+        return JsonResponse({
+            'success': False
+        }, status=500)
