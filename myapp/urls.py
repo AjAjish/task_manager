@@ -1,5 +1,5 @@
 from .views import (
-    home,register,login,dashboard,task,work,sales,expenses,
+    home,register,login,dashboard,task,work,sales,expenses,update_rma_status,
     sales_and_expenses_page,rma,attendance_view,attendance_submit,logout,home_view,apply_leave
 )
 from django.urls import path
@@ -22,5 +22,6 @@ urlpatterns = [
     path('attendance/<uuid:userid>/', attendance_view, name='attendance'),
     path('attendance_submit/<uuid:userid>/', attendance_submit, name='attendance_submit'),
     path('leave/apply/<uuid:userid>/', apply_leave, name='apply_leave'),
+    path('update_rma/<uuid:userid>/', update_rma_status, name='update_rma'),
     path('logout/', logout, name='logout'),
 ]

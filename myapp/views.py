@@ -30,11 +30,6 @@ def register(request):
         password = (request.POST.get('password'))
         confirmPassword = (request.POST.get('confirmPassword'))  
 
-        # Debugging line to check received data...
-        print(
-            f"Username: {username}, Email: {email}, MobileNo: {mobileNo}, Password: {password}, ConfirmPassword: {confirmPassword}"
-        )
-
         if password != confirmPassword:
             messages.error(request, "Passwords do not match.")
             return redirect('register')
@@ -60,9 +55,6 @@ def login(request):
     if request.method == 'POST':
         email = request.POST.get('email')
         password = request.POST.get('password')
-
-        #Debuging line to check received data...
-        print(f"Email: {email}, Password: {password}")
 
         try:
             user = User.objects.get(email=email)
@@ -109,7 +101,6 @@ def dashboard(request,userid=None):
 def task(request,userid=None):
     userid = request.session.get('userid')
     user = User.objects.get(userid=userid) if userid else None
-    print(f"UserID from session: {userid}")  # Debugging line
     if userid:
         if request.method == 'POST':
             # Task details from the form
@@ -166,8 +157,6 @@ def task(request,userid=None):
                 }
             }
 
-            print(f"Task Details JSON: {task_details}")  # Debugging line
-
             Task.objects.create(taslDetails=task_details)
             messages.success(request, "Task created successfully.")
 
@@ -189,8 +178,6 @@ def work(request,userid=None):
         assigned_userid = request.POST.get('assignedUserId')
         work_taskid = request.POST.get('workTaskId')
         work_description = request.POST.get('workDescription')
-
-        print(f"Assigning work to UserID: {assigned_userid} for TaskID: {work_taskid} with Description: {work_description}")  # Debugging line  
 
         try:
             assigned_user = User.objects.get(userid=assigned_userid)
@@ -215,6 +202,7 @@ def work(request,userid=None):
             messages.error(request, "Work assignment failed.")
         
         except Exception as e:
+            print(f"Error assigning work: {str(e)}")  # Debugging line
             messages.error(request, f"An error occurred: {str(e)}")
 
     return render(request, 'work.html', {
@@ -227,9 +215,9 @@ def work(request,userid=None):
 def sales_and_expenses_page(request, userid=None):
     
     userid = request.session.get('userid')
-    # To shoe only today sales and expenses record
+    # To show only today sales and expenses record
     sales_and_expenses = SalesAndExpenses.objects.filter(salesData__date=today).first()
-    print(sales_and_expenses)
+
     if not userid:
         return redirect('login')  # or your login page
     return render(request, 'sales.html', {'userid': userid, 'sales_and_expenses': sales_and_expenses})
@@ -336,7 +324,6 @@ def expenses(request, userid=None):
 
 def rma(request, userid=None):
     rma_list = RMA.objects.all()
-    print("RMA List:", rma_list)
     rmaData = {}
     userid = request.session.get('userid')
     if not userid:
@@ -350,6 +337,7 @@ def rma(request, userid=None):
         )
 
     if request.method == 'POST':
+        dc_no = request.POST.get('dc_no')
         to_address = request.POST.get('to_address')
         product_name = request.POST.get('product_name')
         serial_number = request.POST.get('serial_number')
@@ -357,15 +345,16 @@ def rma(request, userid=None):
         sent_date = request.POST.get('sent_date')
         problem_description = request.POST.get('problem_description')
 
-        print(f"RMA Submission - To: {to_address}, Product: {product_name}, Serial: {serial_number}, Quantity: {quantity}, Sent Date: {sent_date}, Problem: {problem_description}")  # Debugging line
-
         rmaData = {
+            'dc_no': dc_no,
             'to_address': to_address,
             'product_name': product_name,
             'serial_number': serial_number,
             'quantity': quantity,
             'sent_date': sent_date,
-            'problem_description': problem_description
+            'problem_description': problem_description,
+            'return_status': 'Pending',
+            'update_date': None
         }
 
         RMA.objects.create(rmaDetails=rmaData)
@@ -387,8 +376,6 @@ def attendance_view(request, userid=None):
         # Assuming attendanceDetails is stored as JSON field
         attendance_dict[date_str] = record.attendanceDetails
     
-    print(f"attendance_dict: {attendance_dict}")  # Debugging line
-
     return render(request, 'attendance.html', {'userid': userid , 'user': user,
                  'attendance_list': attendance_dict})
 
@@ -551,13 +538,12 @@ def apply_leave(request, userid=None):
                     'leave': leave_data
                 })
 
-            # attendance.attendanceDetails[attendance_date] = {
-            #     'AttendanceData': attendance_items,
-            #     'leave': leave_data
-            # }
+            attendance.attendanceDetails[attendance_date] = {
+                'AttendanceData': attendance_items,
+                'leave': leave_data
+            }
 
-            # attendance.save()
-            print(attendance.attendanceDetails)
+            attendance.save()
 
         else:
             Attendance.objects.create(
@@ -586,7 +572,46 @@ def apply_leave(request, userid=None):
         }, status=400)
 
     except Exception as e:
-        messages.error(request, f"Failed to apply leave by {str(e)}.")
+        print(f"Error applying leave: {str(e)}")  # Debugging line
+        messages.error(request, f"Failed to apply leave: {str(e)}.")
+        return JsonResponse({
+            'success': False
+        }, status=500)
+
+def update_rma_status(request, userid=None):
+    if request.method != 'POST':
+        return JsonResponse({
+            'success': False,
+            'message': 'Invalid request method'
+        }, status=405)
+
+    try:
+        data = json.loads(request.body)
+        rma_id = data.get('rma_id')
+        update_status = data.get('update_status')
+        update_date = data.get('update_date')
+
+        rma_record = RMA.objects.get(rmaid=rma_id)
+        rma_details = rma_record.rmaDetails
+        rma_details['update_status'] = update_status
+        rma_details['update_date'] = update_date
+        rma_record.rmaDetails = rma_details
+        rma_record.save()
+
+        messages.success(request, "RMA status updated successfully.")
+        return JsonResponse({
+            'success': True
+        })
+
+    except RMA.DoesNotExist:
+        messages.error(request, "RMA record not found.")
+        return JsonResponse({
+            'success': False
+        }, status=404)
+
+    except Exception as e:
+        print(f"Error updating RMA status: {str(e)}")  # Debugging line
+        messages.error(request, f"Failed to update RMA status: {str(e)}.")
         return JsonResponse({
             'success': False
         }, status=500)

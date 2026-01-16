@@ -3,6 +3,194 @@
 
 {% block title %}RMA - Return Merchandise Authorization{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Modal Styles - Inline to ensure they load */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left:  0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        padding: 20px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+        display: flex ! important;
+        opacity: 1 !important;
+    }
+
+    .modal-container {
+        background: var(--bg-primary, #fff);
+        border-radius: 16px;
+        max-width: 900px;
+        width: 100%;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        max-height: 90vh;
+        overflow-y: auto;
+        border: 1px solid var(--border-color, #e0e0e0);
+        animation: modalSlideIn 0.3s ease;
+    }
+
+    @keyframes modalSlideIn {
+        from {
+            transform: scale(0.9);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 24px 32px;
+        border-bottom:  1px solid var(--border-color, #e0e0e0);
+        background: linear-gradient(135deg, rgba(0, 122, 255, 0.05), rgba(88, 86, 214, 0.05));
+    }
+
+    .modal-header h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary, #000);
+        margin: 0;
+    }
+
+    .modal-close {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: none;
+        background: var(--bg-secondary, #f5f5f5);
+        color: var(--text-secondary, #666);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .modal-close:hover {
+        background: #ff3b30;
+        color: white;
+        transform: rotate(90deg);
+    }
+
+    .modal-body {
+        padding: 32px;
+    }
+
+    .modal-section {
+        margin-bottom: 32px;
+        padding: 24px;
+        background: var(--bg-secondary, #f9f9f9);
+        border-radius: 12px;
+        border: 1px solid var(--border-color, #e0e0e0);
+    }
+
+    .modal-section-highlight {
+        background: linear-gradient(135deg, rgba(0, 122, 255, 0.05), rgba(52, 199, 89, 0.05));
+        border:  2px solid rgba(0, 122, 255, 0.2);
+    }
+
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.125rem;
+        font-weight:  700;
+        color: var(--text-primary, #000);
+        margin:  0 0 20px 0;
+        padding-bottom: 12px;
+        border-bottom: 2px solid var(--border-color, #e0e0e0);
+    }
+
+    .section-title svg {
+        color: #007AFF;
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        padding: 24px 32px;
+        border-top: 1px solid var(--border-color, #e0e0e0);
+        background: var(--bg-secondary, #f5f5f5);
+        border-bottom-left-radius: 16px;
+        border-bottom-right-radius: 16px;
+    }
+
+    .btn-modal {
+        padding: 12px 32px;
+        border-radius: 8px;
+        font-size: 0.938rem;
+        font-weight:  600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-cancel {
+        background: var(--bg-primary, #fff);
+        color: var(--text-primary, #000);
+        border: 1px solid var(--border-color, #ccc);
+    }
+
+    .btn-cancel:hover {
+        background: var(--bg-tertiary, #e0e0e0);
+        transform: translateY(-2px);
+    }
+
+    .btn-submit-modal {
+        background: linear-gradient(135deg, #007AFF, #5856D6);
+        color: white;
+        box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+    }
+
+    .btn-submit-modal:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .modal-container {
+            width: 95%;
+            margin: 10px;
+        }
+
+        .modal-header,
+        .modal-body,
+        .modal-footer {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            flex-direction: column;
+        }
+
+        .btn-modal {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="rma-container">
     
@@ -41,6 +229,21 @@
                 {% csrf_token %}
 
                 <div class="form-row">
+                    <div class="form-group">
+                        <label for="dc_no" class="form-label required">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                            </svg>
+                            DC No
+                        </label>
+                        <input 
+                            type="text" 
+                            id="dc_no" 
+                            name="dc_no" 
+                            class="form-input" 
+                            required
+                        >
+                    </div>
                     <div class="form-group form-group-full">
                         <label for="to_address" class="form-label required">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -73,7 +276,7 @@
                             id="product_name" 
                             name="product_name" 
                             class="form-input" 
-                            placeholder="e. g., Laptop, Monitor, Keyboard"
+                            placeholder="e.g., Laptop, Monitor, Keyboard"
                             required
                         >
                     </div>
@@ -148,7 +351,7 @@
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle cx="12" cy="12" r="10"></circle>
                                 <line x1="12" y1="16" x2="12" y2="12"></line>
-                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                <line x1="12" y1="8" x2="12. 01" y2="8"></line>
                             </svg>
                             Problem Description
                         </label>
@@ -209,9 +412,12 @@
                 <table class="rma-table">
                     <thead>
                         <tr>
-                            <th class="th-id">
+                            <th class="th-dc-no">
                                 <div class="th-content">
-                                    <span>#</span>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                    </svg>
+                                    <span>DC No</span>
                                 </div>
                             </th>
                             <th class="th-address">
@@ -228,7 +434,7 @@
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
                                     </svg>
-                                    <span>Product Name</span>
+                                    <span>Product</span>
                                 </div>
                             </th>
                             <th class="th-serial">
@@ -236,7 +442,7 @@
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                                     </svg>
-                                    <span>Serial Number</span>
+                                    <span>Serial No</span>
                                 </div>
                             </th>
                             <th class="th-quantity">
@@ -245,7 +451,7 @@
                                         <line x1="8" y1="6" x2="21" y2="6"></line>
                                         <line x1="8" y1="12" x2="21" y2="12"></line>
                                     </svg>
-                                    <span>Quantity</span>
+                                    <span>Qty</span>
                                 </div>
                             </th>
                             <th class="th-problem">
@@ -257,6 +463,26 @@
                                     <span>Problem</span>
                                 </div>
                             </th>
+                            <th class="th-status">
+                                <div class="th-content">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <path d="M12 6v6l4 2"></path>
+                                    </svg>
+                                    <span>Status</span>
+                                </div>
+                            </th>
+                            <th class="th-update-date">
+                                <div class="th-content">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                                    </svg>
+                                    <span>Updated</span>
+                                </div>
+                            </th>
                             <th class="th-date">
                                 <div class="th-content">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -265,7 +491,7 @@
                                         <line x1="8" y1="2" x2="8" y2="6"></line>
                                         <line x1="3" y1="10" x2="21" y2="10"></line>
                                     </svg>
-                                    <span>Date</span>
+                                    <span>Sent Date</span>
                                 </div>
                             </th>
                             <th class="th-actions">
@@ -277,9 +503,19 @@
                     </thead>
                     <tbody id="rmaTableBody">
                         {% for rma in rma_list %}
-                        <tr class="table-row">
-                            <td class="td-id">
-                                <span class="id-badge">{{ forloop.counter }}</span>
+                        <tr class="table-row" 
+                            data-rma-id="{{ rma.rmaid }}"
+                            data-dc-no="{{ rma.rmaDetails.dc_no|default_if_none:'' }}"
+                            data-address="{{ rma.rmaDetails.to_address|default_if_none:'' }}"
+                            data-product="{{ rma.rmaDetails.product_name|default_if_none:'' }}"
+                            data-serial="{{ rma.rmaDetails.serial_number|default_if_none:'' }}"
+                            data-quantity="{{ rma.rmaDetails.quantity|default_if_none:'' }}"
+                            data-problem="{{ rma.rmaDetails.problem_description|default_if_none:'' }}"
+                            data-status="{{ rma.rmaDetails.update_status|default_if_none:'Pending' }}"
+                            data-update-date="{{ rma.rmaDetails.update_date|default_if_none:'' }}"
+                            data-sent-date="{{ rma.rmaDetails.sent_date|default_if_none:'' }}">
+                            <td class="td-dc-no">
+                                <span class="dc-badge">{{ rma.rmaDetails.dc_no|default_if_none:"N/A" }}</span>
                             </td>
                             <td class="td-address">
                                 <div class="address-cell">
@@ -302,29 +538,37 @@
                                     {{ rma.rmaDetails.problem_description|truncatewords:8|default_if_none:"N/A" }}
                                 </div>
                             </td>
+                            <td class="td-status">
+                                <span class="status-badge status-{{ rma.rmaDetails.update_status|lower|default:'pending' }}">
+                                    {{ rma.rmaDetails.update_status|default:"Pending" }}
+                                </span>
+                            </td>
+                            <td class="td-update-date">
+                                <span class="date-badge">{{ rma.rmaDetails.update_date|default_if_none:"--" }}</span>
+                            </td>
                             <td class="td-date">
                                 <span class="date-badge">{{ rma.rmaDetails.sent_date|default_if_none:"N/A" }}</span>
                             </td>
                             <td class="td-actions">
                                 <div class="action-buttons">
-                                    <button class="btn-icon btn-view" title="View Details" onclick="viewRMA({{ rma.id }})">
+                                    <!-- <button class="btn-icon btn-view" title="View Details" onclick="viewRMA('{{ rma.rmaid }}')">
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                             <circle cx="12" cy="12" r="3"></circle>
                                         </svg>
-                                    </button>
-                                    <button class="btn-icon btn-edit" title="Edit" onclick="editRMA({{ rma.id }})">
+                                    </button> -->
+                                    <button class="btn-icon btn-edit" title="Edit" onclick="editRMA('{{ rma.rmaid }}')">
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                         </svg>
                                     </button>
-                                    <button class="btn-icon btn-delete" title="Delete" onclick="deleteRMA({{ rma.id }})">
+                                    <!-- <button class="btn-icon btn-delete" title="Delete" onclick="deleteRMA('{{ rma.rmaid }}')">
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                             <polyline points="3 6 5 6 21 6"></polyline>
                                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                                         </svg>
-                                    </button>
+                                    </button> -->
                                 </div>
                             </td>
                         </tr>
@@ -354,24 +598,188 @@
     </div>
 
 </div>
+
+<!-- Temporary Debug Section - Remove after fixing -->
+<!-- <div style="background: #f0f0f0; padding: 20px; margin: 20px; border:  2px solid red;">
+    <h3>DEBUG INFO</h3>
+    {% for rma in rma_list %}
+        <div style="margin: 10px 0; padding: 10px; background:  white;">
+            <strong>RMA {{ forloop.counter }}:</strong><br>
+            <code>
+                rma.id: {{ rma.rmaid }}<br>
+                rma.rmaDetails.dc_no: {{ rma.rmaDetails.dc_no }}<br>
+                rma keys: {{ rma.keys }}<br>
+                rmaDetails keys: {{ rma.rmaDetails.keys }}<br>
+            </code>
+        </div>
+    {% endfor %}
+</div> -->
+
+<!-- Edit RMA Modal -->
+<div class="modal-overlay" id="editRMAModal">
+    <div class="modal-container modal-large">
+        <div class="modal-header">
+            <h2>Edit RMA Request</h2>
+            <button class="modal-close" onclick="closeEditModal()" type="button">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <form id="editRMAForm" onsubmit="submitEditRMA(event)">
+            <div class="modal-body">
+                <input type="hidden" id="edit_rma_id" name="rma_id">
+                
+                <!-- Existing Data (Read-only) -->
+                <div class="modal-section">
+                    <h3 class="section-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                        Existing RMA Details
+                    </h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">DC No</label>
+                            <input type="text" id="edit_dc_no" class="form-input" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Product Name</label>
+                            <input type="text" id="edit_product_name" class="form-input" readonly>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Serial Number</label>
+                            <input type="text" id="edit_serial_number" class="form-input" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Quantity</label>
+                            <input type="text" id="edit_quantity" class="form-input" readonly>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group form-group-full">
+                            <label class="form-label">Address</label>
+                            <textarea id="edit_address" class="form-textarea" rows="2" readonly></textarea>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group form-group-full">
+                            <label class="form-label">Problem Description</label>
+                            <textarea id="edit_problem" class="form-textarea" rows="3" readonly></textarea>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Sent Date</label>
+                            <input type="text" id="edit_sent_date" class="form-input" readonly>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Update Fields -->
+                <div class="modal-section modal-section-highlight">
+                    <h3 class="section-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <polyline points="1 20 1 14 7 14"></polyline>
+                            <path d="M3. 51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                        </svg>
+                        Update Information
+                    </h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="update_status" class="form-label required">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <path d="M12 6v6l4 2"></path>
+                                </svg>
+                                Update Status
+                            </label>
+                            <select id="update_status" name="update_status" class="form-input" required>
+                                <option value="">Select Status</option>
+                                <option value="Pending">Pending</option>
+                                <option value="In Transit">In Transit</option>
+                                <option value="Received">Received</option>
+                                <option value="Under Review">Under Review</option>
+                                <option value="Approved">Approved</option>
+                                <option value="Rejected">Rejected</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="update_date" class="form-label required">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                </svg>
+                                Update Date
+                            </label>
+                            <input type="date" id="update_date" name="update_date" class="form-input" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-modal btn-cancel" onclick="closeEditModal()">Cancel</button>
+                <button type="submit" class="btn-modal btn-submit-modal">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<form style="display: none;">{% csrf_token %}</form>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+    console.log('RMA Script Loaded');
     
     // Set today's date as default
-    document. addEventListener('DOMContentLoaded', function() {
-        const dateInput = document.getElementById('rma_date');
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM Content Loaded');
+        
+        const dateInput = document.getElementById('sent_date');
         if (dateInput && ! dateInput.value) {
             const today = new Date().toISOString().split('T')[0];
-            dateInput.value = today;
+            dateInput. value = today;
         }
+        
+        // Set update date default
+        const updateDateInput = document.getElementById('update_date');
+        if (updateDateInput) {
+            updateDateInput.value = new Date().toISOString().split('T')[0];
+        }
+        
+        // Test modal existence
+        const modal = document.getElementById('editRMAModal');
+        console.log('Modal element exists:', !!modal);
     });
 
     // Form submission handling
-    document.getElementById('rmaForm').addEventListener('submit', function(e) {
-        toast.info('Submitting RMA request...', 2000);
-    });
+    const rmaForm = document.getElementById('rmaForm');
+    if (rmaForm) {
+        rmaForm.addEventListener('submit', function(e) {
+            console.log('Form submitted');
+            if (typeof toast !== 'undefined') {
+                toast.info('Submitting RMA request...', 2000);
+            }
+        });
+    }
 
     // Table search functionality
     const searchInput = document.getElementById('tableSearch');
@@ -382,41 +790,176 @@
 
             tableRows.forEach(row => {
                 const text = row.textContent.toLowerCase();
-                if (text.includes(searchTerm)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
             });
         });
     }
 
-    // Action button functions
+    // View RMA function
     function viewRMA(id) {
-        toast.info(`Viewing RMA #${id}`, 2000);
-        // Add your view logic here
+        console.log('View RMA:', id);
+        if (typeof toast !== 'undefined') {
+            toast.info(`Viewing RMA #${id}`, 2000);
+        }
     }
 
+    // Edit RMA function
     function editRMA(id) {
-        toast.info(`Editing RMA #${id}`, 2000);
-        // Add your edit logic here
+        console.log('==================');
+        console.log('Edit RMA called with ID:', id);
+        
+        const row = document.querySelector(`tr[data-rma-id="${id}"]`);
+        console.log('Row found:', !!row);
+        
+        if (!row) {
+            console. error('Row not found for RMA ID:', id);
+            alert('Error: Could not find RMA record');
+            return;
+        }
+        
+        // Populate modal with existing data
+        console.log('Populating fields.. .');
+        document.getElementById('edit_rma_id').value = id;
+        document.getElementById('edit_dc_no').value = row.dataset.dcNo || 'N/A';
+        document.getElementById('edit_product_name').value = row.dataset.product || 'N/A';
+        document.getElementById('edit_serial_number').value = row.dataset.serial || 'N/A';
+        document.getElementById('edit_quantity').value = row.dataset.quantity || 'N/A';
+        document.getElementById('edit_address').value = row.dataset.address || 'N/A';
+        document.getElementById('edit_problem').value = row.dataset.problem || 'N/A';
+        document.getElementById('edit_sent_date').value = row.dataset.sentDate || 'N/A';
+        
+        // Set current status
+        const currentStatus = row.dataset.status || 'Pending';
+        console.log('Setting status:', currentStatus);
+        document.getElementById('update_status').value = currentStatus;
+        
+        // Set update date
+        const currentUpdateDate = row.dataset.updateDate || new Date().toISOString().split('T')[0];
+        console.log('Setting update date:', currentUpdateDate);
+        document.getElementById('update_date').value = currentUpdateDate;
+        
+        // Open modal
+        const modal = document.getElementById('editRMAModal');
+        console.log('Modal element:', !! modal);
+        
+        if (modal) {
+            console.log('Opening modal...');
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            console.log('Modal classes:', modal.className);
+            console.log('Modal opened successfully! ');
+        } else {
+            console.error('Modal element not found! ');
+            alert('Error: Modal not found on page');
+        }
+        
+        console.log('==================');
     }
 
+    // Close edit modal
+    function closeEditModal() {
+        console.log('Closing modal');
+        const modal = document.getElementById('editRMAModal');
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+            
+            const form = document.getElementById('editRMAForm');
+            if (form) {
+                form.reset();
+            }
+        }
+    }
+
+    // Submit edit form
+    function submitEditRMA(event) {
+        event.preventDefault();
+        console.log('Submitting edit form');
+        
+        const rmaId = document.getElementById('edit_rma_id').value;
+        const updateStatus = document.getElementById('update_status').value;
+        const updateDate = document.getElementById('update_date').value;
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        console.log('Form data:', { rmaId, updateStatus, updateDate });
+
+        if (!updateStatus || !updateDate) {
+            alert('Please fill all required fields');
+            return;
+        }
+
+        fetch(`/update_rma/{{ userid }}/`, {
+            method: 'POST',
+            headers:  {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON. stringify({
+                rma_id: rmaId,
+                update_status: updateStatus,
+                update_date: updateDate
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            console.log('Response:', data);
+            if (data.success) {
+                if (typeof toast !== 'undefined') {
+                } else {
+                }
+                closeEditModal();
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                alert(data.message || 'Failed to update RMA');
+            }
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            alert('Server error occurred');
+        });
+    }
+
+    // Delete RMA function
     function deleteRMA(id) {
+        console.log('Delete RMA:', id);
         if (confirm('Are you sure you want to delete this RMA record?')) {
-            toast.warning(`Deleting RMA #${id}`, 2000);
+            if (typeof toast !== 'undefined') {
+                toast.warning(`Deleting RMA #${id}`, 2000);
+            }
             // Add your delete logic here
         }
     }
 
+    // Quantity validation
     const quantityInput = document.getElementById('quantity');
     if (quantityInput) {
-        quantityInput. addEventListener('input', function() {
+        quantityInput.addEventListener('input', function() {
             if (this.value < 1) {
                 this. value = 1;
-                toast.warning('Quantity must be at least 1', 2000);
+                if (typeof toast !== 'undefined') {
+                    toast.warning('Quantity must be at least 1', 2000);
+                }
             }
         });
     }
+
+    // Close modal on outside click
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal-overlay')) {
+            console.log('Clicked outside modal');
+            closeEditModal();
+        }
+    });
+
+    // Close modal with ESC key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('editRMAModal');
+            if (modal && modal.classList.contains('active')) {
+                console.log('ESC pressed, closing modal');
+                closeEditModal();
+            }
+        }
+    });
 </script>
 {% endblock %}
