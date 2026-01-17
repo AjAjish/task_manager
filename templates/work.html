@@ -41,7 +41,7 @@
             <div class="stat-icon stat-assigned">✅</div>
             <div class="stat-info">
                 <span class="stat-label">Active Works</span>
-                <span class="stat-number">{{ works|length }}</span>
+                <span class="stat-number">{{ works|length|default:0 }}</span>
             </div>
         </div>
 
@@ -71,7 +71,6 @@
                     </div>
                     <div class="user-info">
                         <div class="user-name">{{ u.username }}</div>
-                        <!-- <div class="user-email">{{ u.email }}</div> -->
                         <span class="user-badge">Active</span>
                     </div>
                 </div>
@@ -91,33 +90,35 @@
 
             <div class="tasks-list">
                 {% for task in tasks %}
-                <div class="task-card">
+                <div class="task-card status-{{ task.taslDetails.payment_info.paymentStatus|lower|default:'pending' }}"
+                     data-status="{{ task.taslDetails.payment_info.paymentStatus|lower|default:'pending' }}">
 
                     <div class="task-header-row">
                         <div class="task-main-info">
-                            <!-- Task Name -->
                             <div class="task-title">
-                                Owner : {{ task.taslDetails.task_info.taskName }}
+                                Owner: {{ task.taslDetails.task_info.taskName }}
                             </div>
                             System Details...
-                            <!-- System Brand  -->
                             <div class="task-description">
                                 {{ task.taslDetails.system_info.brand }}
                             </div>
-                            <!-- System Model -->
                             <div class="task-description">
                                 {{ task.taslDetails.system_info.model }}
                             </div>
-                            <!-- Issue Description -->
                             <div class="task-description">
                                 {{ task.taslDetails.system_info.issueDescription|truncatewords:20 }}
                             </div>
                         </div>
 
-                        <!-- System Type -->
                         <div class="task-priority">
                             <span class="priority-badge priority-medium">
+                                {{ task.taslDetails.task_info.taskNo|title }}
+                            </span>
+                            <span class="priority-badge priority-medium">
                                 {{ task.taslDetails.system_info.systemType|title }}
+                            </span>
+                            <span class="status-badge status-{{ task.taslDetails.payment_info.paymentStatus|lower|default:'pending' }}">
+                                {{ task.taslDetails.task_info.taskStatus }}
                             </span>
                         </div>
                     </div>
@@ -125,30 +126,23 @@
                     <div class="task-footer-row">
                         <div class="task-meta">
                             <span class="task-meta-item">
-                             Take By :  👤 {{ task.taslDetails.task_created_by }}
+                                Take By: 👤 {{ task.taslDetails.task_created_by }}
                             </span>
-
                             <span class="task-meta-item">
-                             Loc  : 📍 {{ task.taslDetails.task_info.taskAddress }}
+                                Loc: 📍 {{ task.taslDetails.task_info.taskAddress }}
                             </span>
-
                             <span class="task-meta-item">
-                             E Date  : 📅 {{ task.taslDetails.system_info.entryDate }}
+                                E Date: 📅 {{ task.taslDetails.system_info.entryDate }}
                             </span>
-
                             <span class="task-meta-item">
-                             D Date :  📅 {{ task.taslDetails.system_info.dueDate }} 
+                                D Date: 📅 {{ task.taslDetails.system_info.dueDate }}
                             </span>
-
                             <span class="task-meta-item">
-                             Price  : 💰 ₹{{ task.taslDetails.payment_info.price }}
+                                Price: 💰 ₹{{ task.taslDetails.payment_info.price }}
                             </span>
-
                             <span class="task-meta-item">
-                             Advance  : 💰 ₹{{ task.taslDetails.payment_info.advance }}
+                                Advance: 💰 ₹{{ task.taslDetails.payment_info.advance }}
                             </span>
-
-
                             <span class="task-meta-item">
                                 ⚙ {{ task.taslDetails.payment_info.paymentStatus|title }}
                             </span>
@@ -230,14 +224,41 @@
 
     <div class="assigned-works-list">
         {% for work in works %}
-        <div class="assigned-work-card">
+        <div class="assigned-work-card"
+             data-work-id="{{ work.workid }}"
+             data-task-id="{{ work.workTask.taskid }}"
+             data-task-name="{{ work.workTask.taslDetails.task_info.taskName }}"
+             data-assigned-to="{{ work.workAssignedTo.username }}"
+             data-assigned-to-id="{{ work.workAssignedTo.userid }}"
+             data-description="{{ work.workDescription }}"
+             data-status="{{ work.workTask.taslDetails.task_info.taskStatus|default:'Pending' }}"
+             data-update-date="{{ work.updateDate|default:'' }}"
+             data-assigned-date="{{ work.assignedAt|date:'Y-m-d' }}">
             <div class="work-info">
                 <div class="work-task">Task: {{ work.workTask.taslDetails.task_info.taskName }}</div>
                 <div class="work-assigned-to">Assigned To: {{ work.workAssignedTo.username }}</div>
                 <div class="work-description">Description: {{ work.workDescription|default:"No description provided." }}</div>
+                <div class="work-status">
+                    Status: 
+                    <span class="status-badge status-{{ work.workTask.taslDetails.task_info.taskStatus|lower|default:'pending' }}">
+                        {{ work.workTask.taslDetails.task_info.taskStatus|default:"" }}
+                    </span>
+                </div>
+                {% if work.updateDate %}
+                <div class="work-update-date">Updated On: {{ work.updateDate }}</div>
+                {% endif %}
             </div>
             <div class="work-meta">
                 <span class="work-date">Assigned On: {{ work.assignedAt|date:"M d, Y" }}</span>
+                <div class="work-actions">
+                    <button class="btn-edit-work" onclick="editWork('{{ work.workid }}')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                        Edit
+                    </button>
+                </div>
             </div>
         </div>
         {% empty %}
@@ -248,6 +269,118 @@
     </div>
 </div>
 
+<!-- ================= EDIT WORK MODAL ================= -->
+<div class="edit-work-modal" id="editWorkModal">
+    <div class="edit-modal-container">
+        <div class="edit-modal-header">
+            <h2>Edit Work Assignment</h2>
+            <button class="edit-modal-close" onclick="closeEditWorkModal()" type="button">✖</button>
+        </div>
+        <form id="editWorkForm" onsubmit="submitEditWork(event)">
+            <div class="edit-modal-body">
+                <input type="hidden" id="edit_work_id" name="work_id">
+                <input type="hidden" id="edit_task_id" name="task_id">
+                <input type="hidden" id="edit_assigned_to_id" name="assigned_to_id">
+                
+                <!-- Existing Data (Read-only) -->
+                <div class="modal-section">
+                    <h3 class="section-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                        Existing Work Details
+                    </h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Task Name</label>
+                            <input type="text" id="edit_task_name" class="form-input" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Assigned To</label>
+                            <input type="text" id="edit_assigned_to" class="form-input" readonly>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group form-group-full">
+                            <label class="form-label">Description</label>
+                            <textarea id="edit_description" class="form-textarea" rows="3" readonly></textarea>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Assigned Date</label>
+                            <input type="text" id="edit_assigned_date" class="form-input" readonly>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Current Status</label>
+                            <input type="text" id="edit_current_status" class="form-input" readonly>
+                        </div>
+                    </div>
+                    
+                </div>
+
+                <!-- Update Fields -->
+                <div class="modal-section modal-section-highlight">
+                    <h3 class="section-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <polyline points="1 20 1 14 7 14"></polyline>
+                            <path d="M3. 51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                        </svg>
+                        Update Information
+                    </h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="update_status" class="form-label required">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <path d="M12 6v6l4 2"></path>
+                                </svg>
+                                Update Status
+                            </label>
+                            <select id="update_status" name="update_status" class="form-input" required>
+                                <option value="">Select Status</option>
+                                <option value="Pending">Pending</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Complete">Complete</option>
+                                <option value="Reject">Reject</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="d_date" class="form-label required">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                </svg>
+                                Update Date
+                            </label>
+                            <input type="date" id="d_date" name="d_date" class="form-input" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="edit-modal-footer">
+                <button type="button" class="btn-modal btn-cancel" onclick="closeEditWorkModal()">Cancel</button>
+                <button type="submit" class="btn-modal btn-submit-modal">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<form style="display: none;">{% csrf_token %}</form>
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
@@ -268,11 +401,202 @@
 
         // Close modal (overlay click)
         overlay.addEventListener("click", function () {
-            modal.style.display = "none";
+            modal. style.display = "none";
         });
+
+        // Set today's date for update date field
+        const updateDateInput = document.getElementById('d_date');
+        if (updateDateInput) {
+            updateDateInput.value = new Date().toISOString().split('T')[0];
+        }
+    });
+
+    // Edit Work Function
+    function editWork(workId) {
+        console.log('==================');
+        console.log('Edit Work called with ID:', workId);
+        
+        const workCard = document.querySelector(`div[data-work-id="${workId}"]`);
+        console.log('Work card found:', !!workCard);
+        
+        if (!workCard) {
+            console.error('Work card not found for ID:', workId);
+            alert('Error: Could not find work record');
+            return;
+        }
+        
+        // Get all data from the work card
+        const workData = {
+            workId: workId,
+            taskId: workCard.dataset.taskId,
+            taskName: workCard.dataset.taskName,
+            assignedTo:  workCard.dataset.assignedTo,
+            assignedToId:  workCard.dataset.assignedToId,
+            description: workCard.dataset.description,
+            status: workCard.dataset.status,
+            updateDate: workCard.dataset.updateDate,
+            assignedDate: workCard.dataset.assignedDate
+        };
+        
+        console.log('Work Data:', workData);
+        
+        // Populate modal with existing data
+        console.log('Populating fields...');
+        document.getElementById('edit_work_id').value = workData.workId;
+        document.getElementById('edit_task_id').value = workData.taskId;
+        document.getElementById('edit_assigned_to_id').value = workData.assignedToId;
+        document.getElementById('edit_task_name').value = workData.taskName || 'N/A';
+        document.getElementById('edit_assigned_to').value = workData.assignedTo || 'N/A';
+        document.getElementById('edit_description').value = workData.description || 'No description provided';
+        document.getElementById('edit_assigned_date').value = workData.assignedDate || 'N/A';
+        document.getElementById('edit_current_status').value = workData.status || 'Pending';
+        
+        // Set current status in dropdown
+        const currentStatus = workData.status || 'Pending';
+        console.log('Setting status:', currentStatus);
+        document.getElementById('update_status').value = currentStatus;
+        
+        // Set update date (current or existing)
+        const currentUpdateDate = workData.updateDate || new Date().toISOString().split('T')[0];
+        console.log('Setting update date:', currentUpdateDate);
+        document.getElementById('d_date').value = currentUpdateDate;
+        
+        // Open modal
+        const modal = document.getElementById('editWorkModal');
+        console.log('Modal element:', !!modal);
+        
+        if (modal) {
+            console.log('Opening modal...');
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            console.log('Modal opened successfully! ');
+        } else {
+            console.error('Modal element not found!');
+            alert('Error: Modal not found on page');
+        }
+        
+        console.log('==================');
+    }
+
+    // Close Edit Work Modal
+    function closeEditWorkModal() {
+        console.log('Closing edit work modal');
+        const modal = document.getElementById('editWorkModal');
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+            
+            const form = document.getElementById('editWorkForm');
+            if (form) {
+                form.reset();
+            }
+        }
+    }
+
+    // Submit Edit Work Form
+    function submitEditWork(event) {
+        event.preventDefault();
+        console.log('Submitting edit work form');
+        
+        // Get all form data
+        const workId = document.getElementById('edit_work_id').value;
+        const taskId = document.getElementById('edit_task_id').value;
+        const assignedToId = document.getElementById('edit_assigned_to_id').value;
+        const updateStatus = document.getElementById('update_status').value;
+        const dDate = document.getElementById('d_date').value;
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        // Prepare data object
+        const formData = {
+            work_id: workId,
+            task_id: taskId,
+            assigned_to_id: assignedToId,
+            update_status: updateStatus,
+            d_date: dDate
+        };
+
+        console.log('Form data to send:', formData);
+
+        // Validate required fields
+        if (!updateStatus || !dDate) {
+            alert('Please fill all required fields');
+            return;
+        }
+
+        if (! taskId) {
+            console.error('Task ID is missing! ');
+            alert('Error: Task ID is missing.  Please try again.');
+            return;
+        }
+
+        if (!assignedToId) {
+            console.error('Assigned User ID is missing!');
+            alert('Error: Assigned User ID is missing. Please try again.');
+            return;
+        }
+
+        // Show loading state
+        const submitBtn = document.querySelector('.btn-submit-modal');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<span>Updating...</span>';
+        submitBtn.disabled = true;
+
+        // Send AJAX request
+        fetch(`/update_work/{{ userid }}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body:  JSON.stringify(formData)
+        })
+        .then(res => {
+            console.log('Response status:', res.status);
+            return res.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+            
+            // Reset button state
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            
+            if (data.success) {
+                alert('Work updated successfully!');
+                closeEditWorkModal();
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                alert(data.message || 'Failed to update work');
+            }
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            
+            // Reset button state
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            
+            alert('Server error occurred. Please try again.');
+        });
+    }
+
+    // Close modal on outside click
+    document.addEventListener('click', (e) => {
+        if (e.target. classList.contains('edit-work-modal')) {
+            console.log('Clicked outside modal');
+            closeEditWorkModal();
+        }
+    });
+
+    // Close modal with ESC key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('editWorkModal');
+            if (modal && modal.classList.contains('active')) {
+                console.log('ESC pressed, closing modal');
+                closeEditWorkModal();
+            }
+        }
     });
 </script>
-
-
 {% endblock %}
-

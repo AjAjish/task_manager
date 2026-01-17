@@ -7,6 +7,8 @@ import json
 from datetime import datetime
 
 today = timezone.now().date().isoformat()
+yesterday = (timezone.now().date() - timezone.timedelta(days=1)).isoformat()
+
 
 # Create your views here.
 
@@ -99,15 +101,17 @@ def dashboard(request,userid=None):
     return render(request, 'dashboard.html')
 
 def task(request,userid=None):
+    
     userid = request.session.get('userid')
     user = User.objects.get(userid=userid) if userid else None
     if userid:
         if request.method == 'POST':
             # Task details from the form
+            taskNo = 3000 + Task.objects.count() + 1
             taskName = request.POST.get('taskName')
             taskAddress = request.POST.get('taskAddress')
             taskMobile = request.POST.get('taskMobile')
-            taskEmail = request.POST.get('taskEmail')
+            taskEmail = request.POST.get('taskEmail',None)
 
             # System data from the form
             systemType = request.POST.get('systemType')
@@ -121,8 +125,8 @@ def task(request,userid=None):
             charger = request.POST.get('charger')
 
             # Patment data from the form
-            price = request.POST.get('price')
-            advance = request.POST.get('advance')
+            price = request.POST.get('price',0) or 0
+            advance = request.POST.get('advance',0) or 0
             paymentStatus = request.POST.get('paymentStatus')
 
             remainder = int(price) -  int(advance)
@@ -131,6 +135,7 @@ def task(request,userid=None):
             task_details = {
                 'task_created_by': user.username if user else 'Unknown',
                 'task_info': {
+                    'taskNo': str(taskNo),
                     'taskName': taskName,
                     'taskAddress': taskAddress,
                     'taskMobile': taskMobile,
@@ -215,15 +220,23 @@ def work(request,userid=None):
 def sales_and_expenses_page(request, userid=None):
     
     userid = request.session.get('userid')
+    print("Today's date:", today) 
     # To show only today sales and expenses record
     sales_and_expenses = SalesAndExpenses.objects.filter(salesData__date=today).first()
+    yesterday_record = SalesAndExpenses.objects.filter(salesData__date=yesterday).first()
+    opening_balance = 0
+    if yesterday_record:
+        opening_balance = yesterday_record.salesData.get("cashbook", [{}])[-1].get("in_shop", 0)
+    print("Opening Balance from yesterday:", opening_balance)  # Debugging line
+
 
     if not userid:
         return redirect('login')  # or your login page
-    return render(request, 'sales.html', {'userid': userid, 'sales_and_expenses': sales_and_expenses})
+    return render(request, 'sales.html', {'userid': userid, 'sales_and_expenses': sales_and_expenses,"opening_balance": opening_balance})
 
 def sales(request,userid=None):
     userid = request.session.get('userid')
+    
     if not userid:
         return redirect('login')  # or your login page
      
@@ -237,7 +250,7 @@ def sales(request,userid=None):
                 "outgoing": [],
                 "total_income": 0,
                 "total_outgoing": 0,
-                "remaining_amount": 0
+                "remaining_amount": 0,
             }
         }
     )
@@ -247,10 +260,14 @@ def sales(request,userid=None):
         income_list = data.get('income', [])
         s_no = len(income_list)
         income_list.append({
-            "s_no": s_no,
+            "s_no": s_no+1,
+            "sales_type" : request.POST.get('sales_type'),
             "product": request.POST.get('product_name'),
+            "sales_payment_type": request.POST.get('sales_payment_type'),
             "amount": float(request.POST.get('product_amount'))
         })
+
+        print("Income List:", income_list)  # Debugging line
 
         # Recalculate totals
         total_income = sum(i["amount"] for i in income_list)
@@ -299,10 +316,14 @@ def expenses(request, userid=None):
         s_no = len(outgoing_list)
 
         outgoing_list.append({
-            "s_no": s_no,
+            "s_no": s_no+1,
+            'expense_type': request.POST.get('expense_type'),
             "name": request.POST.get("expense_name"),
+            "expense_payment_type" : request.POST.get("expense_payment_type"),
             "amount": float(request.POST.get("expense_amount", 0))
         })
+
+        print("Outgoing List:", outgoing_list)  # Debugging line
 
         # Recalculate totals
         total_income = sum(i["amount"] for i in data.get("income", []))
@@ -312,6 +333,67 @@ def expenses(request, userid=None):
             "outgoing": outgoing_list,
             "total_outgoing": total_outgoing,
             "remaining_amount": total_income - total_outgoing
+        })
+
+        sales_obj.salesData = data
+        sales_obj.save()
+
+        messages.success(request, "Expense added successfully.")
+        return redirect("sales_and_expenses", userid=userid)
+
+    return render(request, "sales.html", {"userid": userid})
+
+def cashbook(request, userid=None):
+    userid = request.session.get('userid')
+    if not userid:
+        return redirect('login')  # or your login page
+
+    # Get or create today's record
+    sales_obj, created = SalesAndExpenses.objects.get_or_create(
+        salesData__date=today,
+        defaults={
+            "salesData": {
+                "date": today,
+                "income": [],
+                "outgoing": [],
+                "total_income": 0,
+                "total_outgoing": 0,
+                "remaining_amount": 0
+            }
+        }
+    )
+
+    if request.method == "POST":
+        data = sales_obj.salesData
+        cashBook_list = data.get("cashbook", [])
+
+        # Auto S No: 0 → n
+        s_no = len(cashBook_list)
+
+        cashBook_list.append({
+            "s_no": s_no+1,
+            'total_amount': request.POST.get('total_amount'),
+            "online_amount": request.POST.get("online_amount"),
+            "expense_amount_cashbook" : request.POST.get("expense_amount_cashbook"),
+            "grand_total": request.POST.get("grand_total"),
+            "to_bank": request.POST.get("to_bank"),
+            "in_shop": request.POST.get("in_shop")
+        })
+
+        print("CashBook List:", cashBook_list)  # Debugging line
+        # Recalculate totals
+        # total_income = sum(i["amount"] for i in data.get("income", []))
+        # total_outgoing = sum(o["amount"] for o in cashBook_list)
+
+        # yesterday opening_balance
+        yesterday_record = SalesAndExpenses.objects.filter(salesData__date=yesterday).first()
+        opening_balance = 0
+        if yesterday_record:
+            opening_balance = yesterday_record.salesData.get("cashbook", [{}])[-1].get("in_shop", 0)
+
+        data.update({
+            "cashbook": cashBook_list,
+            "opening_balance": opening_balance
         })
 
         sales_obj.salesData = data
@@ -612,6 +694,51 @@ def update_rma_status(request, userid=None):
     except Exception as e:
         print(f"Error updating RMA status: {str(e)}")  # Debugging line
         messages.error(request, f"Failed to update RMA status: {str(e)}.")
+        return JsonResponse({
+            'success': False
+        }, status=500)
+
+def update_work_status(request, userid=None):
+    if not userid:
+        return redirect('login') 
+    
+    if request.method != 'POST':
+        return JsonResponse({
+            'success': False,
+            'message': 'Invalid request method'
+        }, status=405)
+
+    try:
+        data = json.loads(request.body)
+
+        work_id = data.get('work_id')
+        task_id = data.get('task_id')
+        assigned_to_id = data.get('assigned_to_id')
+        update_status = data.get('update_status')
+        d_date = data.get('d_date')
+
+        print(f"workid: {work_id}, task_id: {task_id}, assigned_to_id: {assigned_to_id}, update_status: {update_status}, d_date: {d_date}")  # Debugging line
+
+        work_record = Task.objects.get(taskid=task_id)
+        work_details = work_record.taslDetails
+        work_details['task_info']['taskStatus'] = update_status
+        work_record.taslDetails = work_details
+        work_record.save()
+
+        messages.success(request, "Work status updated successfully.")
+        return JsonResponse({
+            'success': True
+        })
+
+    except Work.DoesNotExist:
+        messages.error(request, "Work record not found.")
+        return JsonResponse({
+            'success': False
+        }, status=404)
+
+    except Exception as e:
+        print(f"Error updating work status: {str(e)}")  # Debugging line
+        messages.error(request, f"Failed to update work status: {str(e)}.")
         return JsonResponse({
             'success': False
         }, status=500)

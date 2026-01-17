@@ -25,6 +25,7 @@ class Task(models.Model):
         return f"{self.taskid}"
     
 class Work(models.Model):
+    workid = models.UUIDField(unique=True, default=uuid.uuid4, editable=False)
     workAssignedTo = models.ForeignKey(User, on_delete=models.CASCADE)
     workTask = models.ForeignKey(Task, on_delete=models.CASCADE)
     workDescription = models.TextField(blank=True)
